@@ -1,0 +1,192 @@
+import type {
+  EditorSettings,
+  PhotoLayout,
+  PhotoRecord,
+} from "@/features/photobooth/types/photobooth.types";
+import { createEditorSettings } from "@/features/photobooth/utils/photobooth-presets";
+
+const STRIP_FRAME_COLOR = "#fff6eb";
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function loadImage(source: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to load photo for editing."));
+    image.src = source;
+  });
+}
+
+function buildCanvasFilter(settings: EditorSettings): string {
+  return [
+    `brightness(${settings.brightness}%)`,
+    `contrast(${settings.contrast}%)`,
+    `saturate(${settings.saturation}%)`,
+  ].join(" ");
+}
+
+function drawRetroFinish(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
+  context.save();
+
+  for (let line = 0; line < height; line += 4) {
+    context.fillStyle = "rgba(33, 22, 58, 0.045)";
+    context.fillRect(0, line, width, 2);
+  }
+
+  const grainCount = Math.floor((width * height) / 1800);
+  for (let index = 0; index < grainCount; index += 1) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const alpha = Math.random() * 0.08;
+    context.fillStyle = `rgba(255, 248, 220, ${alpha})`;
+    context.fillRect(x, y, 1.5, 1.5);
+  }
+
+  context.strokeStyle = "rgba(255, 246, 235, 0.75)";
+  context.lineWidth = Math.max(10, width * 0.018);
+  context.strokeRect(0, 0, width, height);
+  context.restore();
+}
+
+function drawVignette(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  vignette: number,
+): void {
+  if (vignette <= 0) {
+    return;
+  }
+
+  const maxRadius = Math.max(width, height) * 0.7;
+  const gradient = context.createRadialGradient(
+    width / 2,
+    height / 2,
+    maxRadius * 0.25,
+    width / 2,
+    height / 2,
+    maxRadius,
+  );
+
+  gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+  gradient.addColorStop(1, `rgba(0, 0, 0, ${clamp(vignette / 100, 0, 0.6)})`);
+
+  context.save();
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, width, height);
+  context.restore();
+}
+
+async function renderSinglePhoto(
+  sourceImage: string,
+  settings: EditorSettings,
+): Promise<string> {
+  const image = await loadImage(sourceImage);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas rendering is unavailable in this browser.");
+  }
+
+  context.filter = buildCanvasFilter(settings);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  context.filter = "none";
+  drawVignette(context, canvas.width, canvas.height, settings.vignette);
+  drawRetroFinish(context, canvas.width, canvas.height);
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
+async function renderStripPhoto(
+  sourceImages: string[],
+  settings: EditorSettings,
+): Promise<string> {
+  const images = await Promise.all(sourceImages.map((source) => loadImage(source)));
+  const framePadding = 22;
+  const innerWidth = 340;
+  const slotHeight = 220;
+  const gap = 16;
+  const footerHeight = 84;
+  const canvas = document.createElement("canvas");
+  canvas.width = innerWidth + framePadding * 2;
+  canvas.height =
+    framePadding * 2 + slotHeight * images.length + gap * (images.length - 1) + footerHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas rendering is unavailable in this browser.");
+  }
+
+  context.fillStyle = STRIP_FRAME_COLOR;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.filter = buildCanvasFilter(settings);
+
+  images.forEach((image, index) => {
+    const scale = Math.max(innerWidth / image.naturalWidth, slotHeight / image.naturalHeight);
+    const drawnWidth = image.naturalWidth * scale;
+    const drawnHeight = image.naturalHeight * scale;
+    const x = framePadding + (innerWidth - drawnWidth) / 2;
+    const y = framePadding + index * (slotHeight + gap) + (slotHeight - drawnHeight) / 2;
+
+    context.drawImage(image, x, y, drawnWidth, drawnHeight);
+  });
+
+  context.filter = "none";
+  drawVignette(context, canvas.width, canvas.height - footerHeight, settings.vignette);
+  drawRetroFinish(context, canvas.width, canvas.height - footerHeight);
+
+  context.fillStyle = "#4a445e";
+  context.font = "600 22px var(--font-geist-sans), sans-serif";
+  context.textAlign = "center";
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 42);
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
+export async function renderPhotoDataUrl(options: {
+  sourceImage: string;
+  settings: EditorSettings;
+  layout: PhotoLayout;
+  stripSources?: string[];
+}): Promise<string> {
+  if (options.layout === "strip") {
+    const stripSources =
+      options.stripSources && options.stripSources.length > 0
+        ? options.stripSources.slice(0, 3)
+        : [options.sourceImage];
+    return renderStripPhoto(stripSources, options.settings);
+  }
+
+  return renderSinglePhoto(options.sourceImage, options.settings);
+}
+
+export function getDefaultEditorSettings(): EditorSettings {
+  return createEditorSettings("original");
+}
+
+export function getStripSources(
+  selectedPhotoId: string,
+  photos: PhotoRecord[],
+): string[] {
+  const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId);
+  const additionalPhotos = photos
+    .filter((photo) => photo.id !== selectedPhotoId)
+    .slice(0, 2)
+    .map((photo) => photo.sourceImage);
+
+  if (!selectedPhoto) {
+    return additionalPhotos;
+  }
+
+  return [selectedPhoto.sourceImage, ...additionalPhotos].slice(0, 3);
+}
