@@ -32,6 +32,10 @@ const GALLERY_STORE = "session-galleries";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("Storage is only available in the browser."));
+      return;
+    }
     const request = window.indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
     request.onupgradeneeded = () => {
@@ -115,6 +119,7 @@ async function persistPhotos(sessionId: string, photos: PhotoRecord[]): Promise<
 }
 
 export async function clearExpiredSessionData(currentSessionId?: string): Promise<void> {
+  if (typeof window === "undefined") return;
   const galleries = await getAllGalleries();
   const activeSessionId = currentSessionId ?? window.sessionStorage.getItem(SESSION_ID_KEY);
 
@@ -126,6 +131,7 @@ export async function clearExpiredSessionData(currentSessionId?: string): Promis
 }
 
 export async function hydrateSessionGallery(): Promise<HydratedSessionGallery> {
+  if (typeof window === "undefined") return { sessionId: "", photos: [] };
   const sessionId = getOrCreateSessionId(window.sessionStorage);
   await clearExpiredSessionData(sessionId);
   const gallery = await getGalleryBySessionId(sessionId);
