@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FaceOverlay } from "@/features/photobooth/components/face-overlay";
 import { cameraEffects, cameraFilters } from "@/features/photobooth/utils/camera-filters";
-import { useFaceDetection } from "@/hooks/use-face-detection";
+import type { FaceLandmarks } from "@/hooks/use-face-detection";
 import type {
   CameraEffectPreset,
   CameraFilterPreset,
@@ -45,6 +45,9 @@ interface CameraStageProps {
   errorMessage: string | null;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  landmarks: FaceLandmarks[] | null;
+  rotation: number;
+  onRotationChange: (rotation: number) => void;
   onStartCamera: () => Promise<void> | void;
   onCapture: () => Promise<void> | void;
   onStartRecording: () => Promise<void> | void;
@@ -72,6 +75,9 @@ export function CameraStage({
   errorMessage,
   videoRef,
   canvasRef,
+  landmarks,
+  rotation,
+  onRotationChange,
   onStartCamera,
   onCapture,
   onStartRecording,
@@ -107,12 +113,6 @@ export function CameraStage({
   // Automatically enable face tracking when a face-tracked effect is selected
   const shouldUseFaceTracking = faceTrackedEffects.includes(activeEffect);
 
-  // Face detection
-  const { landmarks, isLoading: faceLoading } = useFaceDetection({
-    videoElement: videoRef.current,
-    enabled: shouldUseFaceTracking && cameraReady,
-  });
-
   // Track video dimensions for overlay scaling
   useEffect(() => {
     if (videoRef.current) {
@@ -143,6 +143,10 @@ export function CameraStage({
   const filteredEffects = cameraEffects.filter((effect) =>
     effect.label.toLowerCase().includes(effectSearch.toLowerCase())
   );
+  
+  const handleRotate = () => {
+    onRotationChange((rotation + 90) % 360);
+  };
 
   const toggleFullscreen = () => {
     if (!cameraContainerRef.current) return;
@@ -190,16 +194,20 @@ export function CameraStage({
       </CardHeader>
 
       <CardContent className="px-8 pb-8 sm:px-10 sm:pb-10">
-        <div className="grid gap-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
-          <div ref={cameraContainerRef} className="retro-frame relative mx-auto w-full overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#7a4328,#db9f5d_22%,#f7ebcf_48%,#d6b48a_72%,#7c4529)] p-8 lg:mx-0 lg:h-full">
-            <div className="aspect-[4/5] w-full lg:h-full">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch">
+          <div ref={cameraContainerRef} className="retro-frame relative mx-auto w-full max-w-[540px] overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#7a4328,#db9f5d_22%,#f7ebcf_48%,#d6b48a_72%,#7c4529)] p-4 sm:p-6 lg:mx-0 lg:h-full">
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.8rem] bg-black/5">
               <video
                 ref={videoRef}
                 autoPlay
                 muted
                 playsInline
-                style={{ filter: activeFilterCss }}
-                className={`h-full w-full object-cover transition-opacity duration-300 ${
+                style={{ 
+                  filter: activeFilterCss,
+                  transform: `rotate(${rotation}deg)`,
+                  transformOrigin: "center center"
+                }}
+                className={`h-full w-full object-cover transition-all duration-300 ${
                   cameraReady ? "opacity-100" : "opacity-0"
                 }`}
               />
@@ -220,6 +228,7 @@ export function CameraStage({
                         videoWidth={videoSizeRef.current.width}
                         videoHeight={videoSizeRef.current.height}
                         videoElement={videoRef.current}
+                        rotation={rotation}
                       />
                     </div>
                   )}
@@ -293,7 +302,7 @@ export function CameraStage({
                 <button
                   type="button"
                   onClick={toggleFullscreen}
-                  className="absolute right-3 top-3 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition"
+                  className="absolute right-3 top-3 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition z-10"
                   title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                 >
                   {isFullscreen ? (
@@ -307,8 +316,19 @@ export function CameraStage({
               {cameraReady ? (
                 <button
                   type="button"
+                  onClick={handleRotate}
+                  className="absolute right-3 top-14 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition z-10"
+                  title="Rotate Camera"
+                >
+                  <RefreshCcw className="size-4" />
+                </button>
+              ) : null}
+
+              {cameraReady ? (
+                <button
+                  type="button"
                   onClick={() => setShowPreviewControls((prev) => !prev)}
-                  className="absolute right-14 top-3 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition"
+                  className="absolute right-14 top-3 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition z-10"
                   title={showPreviewControls ? "Hide Controls" : "Show Controls"}
                 >
                   <Wand2 className="size-4" />

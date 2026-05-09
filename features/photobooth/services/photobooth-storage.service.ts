@@ -258,18 +258,6 @@ export async function duplicatePhoto(
   return { sessionId: input.sessionId, photos };
 }
 
-export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
-  const link = document.createElement("a");
-  if (photo.mediaType === "video" && photo.renderedVideo) {
-    link.href = photo.renderedVideo;
-    link.download = `${(photo.name ?? "flashframe-clip").replaceAll(" ", "-").toLowerCase()}.webm`;
-  } else {
-    link.href = photo.renderedImage;
-    link.download = `${(photo.name ?? "flashframe-shot").replaceAll(" ", "-").toLowerCase()}.jpg`;
-  }
-  link.click();
-}
-
 export function getEmptyEditorState(): {
   layout: PhotoLayout;
   settings: EditorSettings;
@@ -278,4 +266,57 @@ export function getEmptyEditorState(): {
     layout: "single",
     settings: getDefaultEditorSettings(),
   };
+}
+
+/**
+ * Robustly triggers a browser download for a photo or video.
+ * Uses Blobs and temporary DOM attachment to ensure the 'download' attribute
+ * and file extensions are honored by all modern browsers.
+ */
+export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const isVideo = photo.mediaType === "video" && photo.renderedVideo;
+  const sourceUrl = isVideo ? photo.renderedVideo! : photo.renderedImage;
+  const extension = isVideo ? "webm" : "jpg";
+
+  // Sanitize filename: use provided name or fallback, remove spaces, force extension
+  const baseName = (photo.name || `flashframe-${photo.mediaType}-${photo.id.slice(-6)}`)
+    .trim()
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+  
+  const fileName = baseName.endsWith(`.${extension}`) 
+    ? baseName 
+    : `${baseName}.${extension}`;
+
+  try {
+    let downloadUrl = sourceUrl;
+    let shouldRevoke = false;
+
+    // For Data URLs, convert to Blob for more reliable downloading in some browsers
+    if (sourceUrl.startsWith("data:")) {
+      const response = await fetch(sourceUrl);
+      const blob = await response.blob();
+      downloadUrl = URL.createObjectURL(blob);
+      shouldRevoke = true;
+    }
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = fileName;
+    
+    // Must append to body for some browsers to honor the download attribute
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (shouldRevoke) {
+      // Small delay to ensure the browser has started the download
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+    }
+  } catch (error) {
+    console.error("FlashFrame: Download failed", error);
+    throw new Error("Unable to prepare the file for download.");
+  }
 }

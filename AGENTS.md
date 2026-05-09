@@ -70,6 +70,15 @@ export async function getStoredPhotos() {
 - Use **Client Components** (`"use client"`) for anything touching MediaPipe, Canvas, or IndexedDB.
 - Co-locate feature-specific UI in `features/<feature>/components/`.
 
+## UI/UX & Design Standards
+
+- **Uniform Layout**: All primary stage containers (Camera, Editor, Gallery) must use consistent aspect ratios and padding. Avoid layout shifts when switching pages.
+- **Visual Excellence**: Implement designs that feel premium:
+    - Use curated color palettes (OKLCH/HSL).
+    - Use modern typography (Google Fonts).
+    - Implement smooth micro-animations for interactions.
+- **Responsiveness**: All containers must fit uniformly to the page width while maintaining their internal aspect ratio (e.g., using `aspect-ratio` or `object-fit`).
+
 ## Validation & Types
 
 - Use **Zod** to validate photo metadata and session objects.
