@@ -9,6 +9,7 @@ import type {
 } from "@/features/photobooth/types/photobooth.types";
 import { getCameraFilterCss } from "@/features/photobooth/utils/camera-filters";
 import { drawFaceEffect } from "@/features/photobooth/utils/face-renderer";
+import { WebGLVHSRenderer } from "@/features/photobooth/utils/webgl-vhs";
 import { COUNTDOWN_SECONDS } from "@/features/photobooth/utils/photobooth-helpers";
 import { createCapture } from "@/features/photobooth/services/photobooth-storage.service";
 import { useFaceDetection } from "@/hooks/use-face-detection";
@@ -36,6 +37,8 @@ export function useCameraBooth({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recordingCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const webglCanvasRef = useRef<HTMLCanvasElement>(null);
+  const webglRendererRef = useRef<WebGLVHSRenderer | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
@@ -69,8 +72,27 @@ export function useCameraBooth({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
       if (recordingAnimationFrameRef.current) window.cancelAnimationFrame(recordingAnimationFrameRef.current);
+      if (webglRendererRef.current) webglRendererRef.current.destroy();
     };
   }, []);
+
+  useEffect(() => {
+    if (cameraFilter === "vhs-pro" && videoRef.current && webglCanvasRef.current) {
+      if (!webglRendererRef.current) {
+        webglRendererRef.current = new WebGLVHSRenderer(
+          webglCanvasRef.current,
+          videoRef.current,
+          () => rotation // Always pass current rotation conceptually, though our shader handles it simply
+        );
+        webglRendererRef.current.start();
+      }
+    } else {
+      if (webglRendererRef.current) {
+        webglRendererRef.current.destroy();
+        webglRendererRef.current = null;
+      }
+    }
+  }, [cameraFilter, permissionState, rotation]);
 
   const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
@@ -146,10 +168,12 @@ export function useCameraBooth({
     
     // Draw image centered
     context.filter = getCameraFilterCss(cameraFilter);
+    const sourceElement = cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
+    
     if (rotation === 90 || rotation === 270) {
-      context.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
+      context.drawImage(sourceElement, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
     } else {
-      context.drawImage(video, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+      context.drawImage(sourceElement, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
     }
     context.filter = "none";
     context.restore();
@@ -206,10 +230,12 @@ export function useCameraBooth({
     ctx.rotate((rotation * Math.PI) / 180);
     
     ctx.filter = getCameraFilterCss(cameraFilter);
+    const sourceElement = cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
+    
     if (rotation === 90 || rotation === 270) {
-      ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
+      ctx.drawImage(sourceElement, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
     } else {
-      ctx.drawImage(video, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+      ctx.drawImage(sourceElement, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
     }
     ctx.filter = "none";
     ctx.restore();
@@ -321,6 +347,7 @@ export function useCameraBooth({
   return {
     videoRef,
     canvasRef,
+    webglCanvasRef,
     permissionState,
     countdownValue,
     flashActive,

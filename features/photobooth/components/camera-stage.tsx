@@ -45,6 +45,7 @@ interface CameraStageProps {
   errorMessage: string | null;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  webglCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   landmarks: FaceLandmarks[] | null;
   rotation: number;
   onRotationChange: (rotation: number) => void;
@@ -75,6 +76,7 @@ export function CameraStage({
   errorMessage,
   videoRef,
   canvasRef,
+  webglCanvasRef,
   landmarks,
   rotation,
   onRotationChange,
@@ -208,7 +210,17 @@ export function CameraStage({
                   transformOrigin: "center center"
                 }}
                 className={`h-full w-full object-cover transition-all duration-300 ${
-                  cameraReady ? "opacity-100" : "opacity-0"
+                  cameraReady && activeFilter !== "vhs-pro" ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              <canvas
+                ref={webglCanvasRef}
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  transformOrigin: "center center"
+                }}
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                  cameraReady && activeFilter === "vhs-pro" ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
               />
 

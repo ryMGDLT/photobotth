@@ -56,6 +56,7 @@ export function PhotoboothApp({ currentPage }: PhotoboothAppProps) {
   const {
     videoRef,
     canvasRef,
+    webglCanvasRef,
     permissionState,
     countdownValue,
     flashActive,
@@ -132,6 +133,7 @@ export function PhotoboothApp({ currentPage }: PhotoboothAppProps) {
           errorMessage={errorMessage}
           videoRef={videoRef}
           canvasRef={canvasRef}
+          webglCanvasRef={webglCanvasRef}
           landmarks={landmarks}
           rotation={rotation}
           onRotationChange={setRotation}

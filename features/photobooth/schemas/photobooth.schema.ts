@@ -17,6 +17,7 @@ export const cameraFilterPresetSchema = z.enum([
   "glam",
   "cyber-pop",
   "vhs-night",
+  "vhs-pro",
   "soft-blur",
   "sepia",
   "vintage",

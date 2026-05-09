@@ -43,6 +43,11 @@ export const cameraFilters: CameraFilterDefinition[] = [
       "brightness(96%) contrast(126%) saturate(88%) sepia(22%) hue-rotate(-22deg)",
   },
   {
+    id: "vhs-pro",
+    label: "VHS Pro (WebGL)",
+    cssFilter: "none", // Handled by WebGL renderer
+  },
+  {
     id: "soft-blur",
     label: "Soft Blur",
     cssFilter:
