@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,15 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onClose, children, className }: DialogProps) {
-  // Close on escape key
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  // Get portal container on mount
+  useEffect(() => {
+    const container = document.getElementById("portal-root");
+    setPortalContainer(container);
+  }, []);
+
+  // Close on escape key and handle body scroll
   useEffect(() => {
     if (!open) return;
 
@@ -38,11 +47,11 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !portalContainer) return null;
 
-  return (
+  const dialogContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto"
       role="dialog"
       aria-modal="true"
     >
@@ -73,6 +82,8 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       </div>
     </div>
   );
+
+  return createPortal(dialogContent, portalContainer);
 }
 
 export function DialogTitle({

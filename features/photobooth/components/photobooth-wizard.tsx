@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -129,10 +129,38 @@ export function PhotoboothWizard({
     return "single";
   }, [activePhoto]);
 
-  const applyEdits = async (nextSettings: EditorSettings, nextLayout: PhotoLayout) => {
+  // Debounce ref for slider edits to prevent flickering
+  const editDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingEditsRef = useRef<{ settings: EditorSettings; layout: PhotoLayout } | null>(null);
+
+  const applyEdits = useCallback(async (nextSettings: EditorSettings, nextLayout: PhotoLayout) => {
     if (!activePhotoId || activePhoto?.mediaType === "video") return;
-    await handleUpdateEdits(activePhotoId, nextSettings, nextLayout);
-  };
+
+    // Store pending edits
+    pendingEditsRef.current = { settings: nextSettings, layout: nextLayout };
+
+    // Clear existing debounce
+    if (editDebounceRef.current) {
+      clearTimeout(editDebounceRef.current);
+    }
+
+    // Debounce the actual update to prevent flickering during slider drag
+    editDebounceRef.current = setTimeout(async () => {
+      if (pendingEditsRef.current && activePhotoId) {
+        await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout);
+        pendingEditsRef.current = null;
+      }
+    }, 300);
+  }, [activePhotoId, activePhoto?.mediaType, handleUpdateEdits]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (editDebounceRef.current) {
+        clearTimeout(editDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleDownload = async (photoId?: string) => {
     const target = photos.find((p) => p.id === (photoId ?? activePhotoId));

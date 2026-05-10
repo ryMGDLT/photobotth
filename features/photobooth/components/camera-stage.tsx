@@ -332,19 +332,19 @@ export function CameraStage({
               ) : null}
 
               {cameraReady ? (
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-3 px-2 z-20 fullscreen-controls">
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2 px-2 z-20 fullscreen-controls">
                   <button
                     type="button"
                     onClick={onToggleCountdown}
                     disabled={busy}
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
                       countdownEnabled
                         ? "retro-marquee border-transparent text-[#fff1d3]"
                         : "border-[#c9a67c] bg-[#fffaf0] text-foreground hover:bg-[#f6e0bb]"
                     }`}
                     title={countdownEnabled ? "Countdown On" : "Countdown Off"}
                   >
-                    <TimerReset className="size-5" />
+                    <TimerReset className="size-4" />
                   </button>
 
                   <button
@@ -359,7 +359,7 @@ export function CameraStage({
                       )
                     }
                     disabled={busy}
-                    className={`rounded-full p-4 transition-transform hover:scale-105 active:scale-95 ${
+                    className={`rounded-full p-3 transition-transform hover:scale-105 active:scale-95 ${
                       captureMode === "video" && isRecording
                         ? "bg-red-500 text-white"
                         : "retro-marquee text-[#fff1d3]"
@@ -375,11 +375,11 @@ export function CameraStage({
                     }
                   >
                     {captureMode === "photo" || captureMode === "strip" ? (
-                      <Zap className="size-6" />
+                      <Zap className="size-5" />
                     ) : isRecording ? (
-                      <VideoOff className="size-6" />
+                      <VideoOff className="size-5" />
                     ) : (
-                      <Video className="size-6" />
+                      <Video className="size-5" />
                     )}
                   </button>
 
@@ -390,10 +390,10 @@ export function CameraStage({
                       setSheetOpen(true);
                     }}
                     disabled={busy || isRecording}
-                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-3 py-3 text-foreground hover:bg-[#f6e0bb] transition"
+                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-2.5 py-2.5 text-foreground hover:bg-[#f6e0bb] transition"
                     title="Capture Mode"
                   >
-                    <Clapperboard className="size-5" />
+                    <Clapperboard className="size-4" />
                   </button>
 
                   <button
@@ -403,10 +403,10 @@ export function CameraStage({
                       setSheetOpen(true);
                     }}
                     disabled={busy}
-                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-3 py-3 text-foreground hover:bg-[#f6e0bb] transition"
+                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-2.5 py-2.5 text-foreground hover:bg-[#f6e0bb] transition"
                     title="Filters"
                   >
-                    <Wand2 className="size-5" />
+                    <Wand2 className="size-4" />
                   </button>
 
                   <button
@@ -416,20 +416,20 @@ export function CameraStage({
                       setSheetOpen(true);
                     }}
                     disabled={busy}
-                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-3 py-3 text-foreground hover:bg-[#f6e0bb] transition"
+                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-2.5 py-2.5 text-foreground hover:bg-[#f6e0bb] transition"
                     title="Effects"
                   >
-                    <Sparkles className="size-5" />
+                    <Sparkles className="size-4" />
                   </button>
 
                   <button
                     type="button"
                     onClick={onRetake}
                     disabled={busy}
-                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-3 py-3 text-foreground hover:bg-[#f6e0bb] transition"
+                    className="rounded-full border border-[#c9a67c] bg-[#fffaf0] px-2.5 py-2.5 text-foreground hover:bg-[#f6e0bb] transition"
                     title="Retake"
                   >
-                    <RefreshCcw className="size-5" />
+                    <RefreshCcw className="size-4" />
                   </button>
                 </div>
               ) : null}

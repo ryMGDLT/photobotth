@@ -129,8 +129,8 @@ async function renderStripPhoto(
 
   context.fillStyle = STRIP_FRAME_COLOR;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.filter = buildCanvasFilter(settings);
 
+  // Render each image with filters and vignette applied individually
   images.forEach((image, index) => {
     const scale = Math.max(innerWidth / image.naturalWidth, slotHeight / image.naturalHeight);
     const drawnWidth = image.naturalWidth * scale;
@@ -138,11 +138,26 @@ async function renderStripPhoto(
     const x = framePadding + (innerWidth - drawnWidth) / 2;
     const y = framePadding + index * (slotHeight + gap) + (slotHeight - drawnHeight) / 2;
 
-    context.drawImage(image, x, y, drawnWidth, drawnHeight);
+    // Create a temporary canvas for each image to apply effects individually
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = innerWidth;
+    tempCanvas.height = slotHeight;
+    const tempCtx = tempCanvas.getContext("2d");
+    if (!tempCtx) return;
+
+    // Apply filters
+    tempCtx.filter = buildCanvasFilter(settings);
+    tempCtx.drawImage(image, (innerWidth - drawnWidth) / 2, (slotHeight - drawnHeight) / 2, drawnWidth, drawnHeight);
+    tempCtx.filter = "none";
+
+    // Apply vignette to individual photo
+    drawVignette(tempCtx, innerWidth, slotHeight, settings.vignette);
+
+    // Draw the processed image to main canvas
+    context.drawImage(tempCanvas, x, y, innerWidth, slotHeight);
   });
 
-  context.filter = "none";
-  drawVignette(context, canvas.width, canvas.height - footerHeight, settings.vignette);
+  // Draw retro finish on the whole strip (border only, no vignette)
   drawRetroFinish(context, canvas.width, canvas.height - footerHeight);
 
   context.fillStyle = "#4a445e";

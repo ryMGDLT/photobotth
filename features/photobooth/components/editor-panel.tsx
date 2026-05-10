@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
+import { useMemo } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +48,57 @@ export function EditorPanel({
 }: EditorPanelProps) {
   const isVideo = activePhoto?.mediaType === "video";
 
+  // Memoize photo preview to prevent flicker when settings change
+  const photoPreview = useMemo(() => {
+    if (!activePhoto) return null;
+
+    if (isVideo && activePhoto.renderedVideo) {
+      return (
+        <video
+          src={activePhoto.renderedVideo}
+          poster={activePhoto.renderedImage}
+          controls
+          playsInline
+          className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
+        />
+      );
+    }
+
+    if (layout === "strip") {
+      return (
+        <div className="flex flex-col gap-2 rounded-[0.8rem] bg-[#2a2435] p-2">
+          {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
+            <div key={`${activePhoto.id}-strip-${idx}`} className="w-auto h-auto">
+              <Image
+                src={img}
+                alt={`Strip photo ${idx + 1}`}
+                width={600}
+                height={400}
+                unoptimized
+                className="w-auto h-auto max-w-full object-contain rounded-md"
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-auto h-auto">
+        <Image
+          src={activePhoto.renderedImage}
+          alt={activePhoto.name ?? "Selected photobooth shot"}
+          width={800}
+          height={533}
+          unoptimized
+          className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
+        />
+      </div>
+    );
+    // Only re-render when photo ID, media type, or layout changes - NOT when settings change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePhoto?.id, activePhoto?.mediaType, activePhoto?.renderedImage, activePhoto?.renderedVideo, activePhoto?.stripImages, activePhoto?.name, layout]);
+
   return (
     <Card className="glass-panel border-white/60">
       <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
@@ -69,41 +121,7 @@ export function EditorPanel({
               <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-6">
                 <div className="flex items-center justify-center py-6 px-4">
                   <div className="retro-frame w-fit h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
-                    {isVideo && activePhoto.renderedVideo ? (
-                      <video
-                        src={activePhoto.renderedVideo}
-                        poster={activePhoto.renderedImage}
-                        controls
-                        playsInline
-                        className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
-                      />
-                    ) : layout === "strip" ? (
-                      <div className="flex flex-col gap-2 rounded-[0.8rem] bg-[#2a2435] p-2">
-                        {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
-                          <div key={idx} className="w-auto h-auto">
-                            <Image
-                              src={img}
-                              alt={`Strip photo ${idx + 1}`}
-                              width={600}
-                              height={400}
-                              unoptimized
-                              className="w-auto h-auto max-w-full object-contain rounded-md"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="w-auto h-auto">
-                        <Image
-                          src={activePhoto.renderedImage}
-                          alt={activePhoto.name ?? "Selected photobooth shot"}
-                          width={800}
-                          height={533}
-                          unoptimized
-                          className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
-                        />
-                      </div>
-                    )}
+                    {photoPreview}
                   </div>
                 </div>
               </div>
