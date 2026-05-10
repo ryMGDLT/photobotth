@@ -120,9 +120,9 @@ export function SessionGallery({
                   className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-[1.2rem]"
                 />
               ) : previewPhoto.layout === "strip" && previewPhoto.stripImages?.length ? (
-                <div className="flex flex-col gap-2 rounded-[1.2rem] bg-[#2a2435] p-2">
+                <div className="retro-scrollbar flex flex-col gap-2 max-h-[60vh] overflow-y-auto rounded-[1.2rem] bg-[#2a2435] p-2">
                   {previewPhoto.stripImages.map((img, idx) => (
-                    <div key={idx} className="w-auto h-auto">
+                    <div key={idx} className="w-auto h-auto flex-shrink-0">
                       <Image
                         src={img}
                         alt={`Strip photo ${idx + 1}`}
