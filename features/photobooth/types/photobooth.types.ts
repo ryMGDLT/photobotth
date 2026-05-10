@@ -22,6 +22,7 @@ export type CameraFilterPreset =
   | "natural"
   | "golden-hour"
   | "glam"
+  | "vhs-pro"
   | "cyber-pop"
   | "vhs-night"
   | "soft-blur"
@@ -142,6 +143,7 @@ export interface PhotoRecord {
   sourceVideo?: string;
   renderedVideo?: string;
   durationMs?: number;
+  stripImages?: string[];
   cameraFilter?: CameraFilterPreset;
   settings: EditorSettings;
   layout: PhotoLayout;
@@ -167,7 +169,9 @@ export interface CreateCaptureInput {
   sourceVideo?: string;
   renderedVideo?: string;
   durationMs?: number;
+  stripImages?: string[];
   cameraFilter?: CameraFilterPreset;
+  layout?: PhotoLayout;
   name?: string;
   status?: PhotoStatus;
 }

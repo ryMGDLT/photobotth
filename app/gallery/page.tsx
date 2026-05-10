@@ -1,5 +1,5 @@
-import { PhotoboothApp } from "@/features/photobooth/components/photobooth-app";
+import { GalleryPageContainer } from "@/features/photobooth/components/gallery-page-container";
 
 export default function GalleryPage() {
-  return <PhotoboothApp currentPage="gallery" />;
+  return <GalleryPageContainer />;
 }

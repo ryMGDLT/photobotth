@@ -160,9 +160,10 @@ export async function createCapture(
     sourceVideo: input.sourceVideo,
     renderedVideo: input.renderedVideo,
     durationMs: input.durationMs,
+    stripImages: input.stripImages,
     cameraFilter: input.cameraFilter,
     settings,
-    layout: "single",
+    layout: input.layout ?? "single",
     name:
       input.name ??
       createPhotoName(

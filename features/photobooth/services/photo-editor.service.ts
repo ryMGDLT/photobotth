@@ -188,5 +188,9 @@ export function getStripSources(
     return additionalPhotos;
   }
 
+  if (selectedPhoto.stripImages && selectedPhoto.stripImages.length === 3) {
+    return selectedPhoto.stripImages;
+  }
+
   return [selectedPhoto.sourceImage, ...additionalPhotos].slice(0, 3);
 }

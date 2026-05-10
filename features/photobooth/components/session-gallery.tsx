@@ -159,7 +159,7 @@ function GalleryColumn({
                       poster={photo.renderedImage}
                       muted
                       playsInline
-                      className="aspect-[4/5] w-full object-cover"
+                      className="aspect-[3/2] w-full object-cover"
                     />
                   ) : (
                     <Image
@@ -168,7 +168,7 @@ function GalleryColumn({
                       width={800}
                       height={1000}
                       unoptimized
-                      className="aspect-[4/5] w-full object-cover"
+                      className="aspect-[3/2] w-full object-cover"
                     />
                   )}
                 </button>
@@ -259,7 +259,7 @@ function GalleryColumnSkeleton({ title }: { title: string }) {
         <Skeleton className="h-6 w-12 rounded-full" />
       </div>
       <div className="space-y-4">
-        <Skeleton className="aspect-[4/5] w-full rounded-[1.4rem]" />
+        <Skeleton className="aspect-[3/2] w-full rounded-[1.4rem]" />
         <Skeleton className="h-5 w-2/3" />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Skeleton className="h-16 rounded-2xl" />

@@ -16,6 +16,119 @@ import { useFaceDetection } from "@/hooks/use-face-detection";
 import type { FaceLandmarks } from "@/hooks/use-face-detection";
 
 const MAX_VIDEO_SECONDS = 8;
+const CAPTURE_ASPECT_RATIO = 3 / 2;
+
+function getSourceDimensions(source: HTMLVideoElement | HTMLCanvasElement): {
+  width: number;
+  height: number;
+} {
+  if (source instanceof HTMLVideoElement) {
+    return {
+      width: source.videoWidth || 1280,
+      height: source.videoHeight || 720,
+    };
+  }
+  return { width: source.width || 1280, height: source.height || 720 };
+}
+
+function getCenterCropRect(
+  sourceWidth: number,
+  sourceHeight: number,
+  targetAspect: number,
+): {
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+} {
+  const sourceAspect = sourceWidth / sourceHeight;
+  if (sourceAspect > targetAspect) {
+    const sw = Math.round(sourceHeight * targetAspect);
+    const sx = Math.round((sourceWidth - sw) / 2);
+    return { sx, sy: 0, sw, sh: sourceHeight };
+  }
+
+  const sh = Math.round(sourceWidth / targetAspect);
+  const sy = Math.round((sourceHeight - sh) / 2);
+  return { sx: 0, sy, sw: sourceWidth, sh };
+}
+
+function cropLandmarksToRect(
+  landmarks: FaceLandmarks[],
+  source: { width: number; height: number },
+  crop: { sx: number; sy: number; sw: number; sh: number },
+): FaceLandmarks[] {
+  return landmarks.map((landmark) => {
+    const xPx = landmark.x * source.width;
+    const yPx = landmark.y * source.height;
+    const x = (xPx - crop.sx) / crop.sw;
+    const y = (yPx - crop.sy) / crop.sh;
+    return {
+      ...landmark,
+      x: Math.min(1, Math.max(0, x)),
+      y: Math.min(1, Math.max(0, y)),
+    };
+  });
+}
+
+function drawCroppedFrame(options: {
+  context: CanvasRenderingContext2D;
+  source: HTMLVideoElement | HTMLCanvasElement;
+  sourceDimensions: { width: number; height: number };
+  cameraFilter: CameraFilterPreset;
+  cameraEffect: CameraEffectPreset;
+  rotation: number;
+  landmarks: FaceLandmarks[] | null;
+  outputWidth: number;
+  outputHeight: number;
+  crop: { sx: number; sy: number; sw: number; sh: number };
+}) {
+  const {
+    context,
+    source,
+    sourceDimensions,
+    cameraFilter,
+    cameraEffect,
+    rotation,
+    landmarks,
+    outputWidth,
+    outputHeight,
+    crop,
+  } = options;
+
+  const rotate = rotation === 90 || rotation === 270;
+  const drawWidth = rotate ? outputHeight : outputWidth;
+  const drawHeight = rotate ? outputWidth : outputHeight;
+
+  context.save();
+  context.translate(outputWidth / 2, outputHeight / 2);
+  context.rotate((rotation * Math.PI) / 180);
+  context.filter = getCameraFilterCss(cameraFilter);
+  context.drawImage(
+    source,
+    crop.sx,
+    crop.sy,
+    crop.sw,
+    crop.sh,
+    -drawWidth / 2,
+    -drawHeight / 2,
+    drawWidth,
+    drawHeight,
+  );
+  context.filter = "none";
+  context.restore();
+
+  if (landmarks) {
+    drawFaceEffect(
+      context,
+      cropLandmarksToRect(landmarks, sourceDimensions, crop),
+      cameraEffect,
+      outputWidth,
+      outputHeight,
+      rotation,
+    );
+  }
+}
 
 interface UseCameraBoothOptions {
   sessionId: string;
@@ -129,69 +242,76 @@ export function useCameraBooth({
     }
   }
 
-  async function handleCapture(countdownEnabled: boolean) {
+  async function handleCapture(countdownEnabled: boolean, captureMode: "single" | "strip" = "single") {
     if (!videoRef.current || !canvasRef.current || !sessionId) return;
 
-    if (countdownEnabled) {
-      for (let s = COUNTDOWN_SECONDS; s > 0; s--) {
-        setCountdownValue(s);
-        await delay(1000);
+    setBusy(true);
+    const capturedImages: string[] = [];
+    const shotsToTake = captureMode === "strip" ? 3 : 1;
+
+    for (let shot = 0; shot < shotsToTake; shot++) {
+      if (countdownEnabled || shot > 0) {
+        // Initial countdown is 3s, subsequent countdowns in a strip are 1s
+        const seconds = shot === 0 ? COUNTDOWN_SECONDS : 1;
+        for (let s = seconds; s > 0; s--) {
+          setCountdownValue(s);
+          await delay(1000);
+        }
+      }
+
+      setCountdownValue(null);
+      setFlashActive(true);
+      window.setTimeout(() => setFlashActive(false), 180);
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        onError("Canvas capture is unavailable in this browser.");
+        setBusy(false);
+        return;
+      }
+
+      const sourceElement =
+        cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
+      const sourceDims = getSourceDimensions(sourceElement);
+      const crop = getCenterCropRect(sourceDims.width, sourceDims.height, CAPTURE_ASPECT_RATIO);
+
+      canvas.width = crop.sw;
+      canvas.height = crop.sh;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawCroppedFrame({
+        context,
+        source: sourceElement,
+        sourceDimensions: sourceDims,
+        cameraFilter,
+        cameraEffect,
+        rotation,
+        landmarks,
+        outputWidth: canvas.width,
+        outputHeight: canvas.height,
+        crop,
+      });
+
+      capturedImages.push(canvas.toDataURL("image/jpeg", 0.92));
+      
+      // Add a small pause after the flash before the next countdown begins
+      if (shot < shotsToTake - 1) {
+        await delay(400);
       }
     }
 
-    setCountdownValue(null);
-    setFlashActive(true);
-    window.setTimeout(() => setFlashActive(false), 180);
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    // Adjust canvas size based on rotation
-    if (rotation === 90 || rotation === 270) {
-      canvas.width = video.videoHeight || 1200;
-      canvas.height = video.videoWidth || 960;
-    } else {
-      canvas.width = video.videoWidth || 960;
-      canvas.height = video.videoHeight || 1200;
-    }
-
-    const context = canvas.getContext("2d");
-    if (!context) {
-      onError("Canvas capture is unavailable in this browser.");
-      return;
-    }
-
-    context.save();
-    // Move to center of canvas and rotate
-    context.translate(canvas.width / 2, canvas.height / 2);
-    context.rotate((rotation * Math.PI) / 180);
-    
-    // Draw image centered
-    context.filter = getCameraFilterCss(cameraFilter);
-    const sourceElement = cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
-    
-    if (rotation === 90 || rotation === 270) {
-      context.drawImage(sourceElement, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
-    } else {
-      context.drawImage(sourceElement, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-    }
-    context.filter = "none";
-    context.restore();
-
-    if (landmarks) {
-      drawFaceEffect(context, landmarks, cameraEffect, canvas.width, canvas.height, rotation);
-    }
-
-    const sourceImage = canvas.toDataURL("image/jpeg", 0.92);
-
-    setBusy(true);
     try {
       const nextGallery = await createCapture({
         sessionId,
         photos,
         mediaType: "photo",
-        sourceImage,
+        sourceImage: capturedImages[0],
+        stripImages: captureMode === "strip" ? capturedImages : undefined,
         cameraFilter,
+        layout: captureMode === "strip" ? "strip" : "single",
       });
       onCaptureSuccess(nextGallery.photos, nextGallery.photos[0].id);
     } catch (err) {
@@ -224,25 +344,24 @@ export function useCameraBooth({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    
-    ctx.filter = getCameraFilterCss(cameraFilter);
-    const sourceElement = cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
-    
-    if (rotation === 90 || rotation === 270) {
-      ctx.drawImage(sourceElement, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
-    } else {
-      ctx.drawImage(sourceElement, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-    }
-    ctx.filter = "none";
-    ctx.restore();
 
-    if (landmarks) {
-      drawFaceEffect(ctx, landmarks, cameraEffect, canvas.width, canvas.height, rotation);
-    }
+    const sourceElement =
+      cameraFilter === "vhs-pro" && webglCanvasRef.current ? webglCanvasRef.current : video;
+    const sourceDims = getSourceDimensions(sourceElement);
+    const crop = getCenterCropRect(sourceDims.width, sourceDims.height, CAPTURE_ASPECT_RATIO);
+
+    drawCroppedFrame({
+      context: ctx,
+      source: sourceElement,
+      sourceDimensions: sourceDims,
+      cameraFilter,
+      cameraEffect,
+      rotation,
+      landmarks,
+      outputWidth: canvas.width,
+      outputHeight: canvas.height,
+      crop,
+    });
 
     drawRetroOverlay(ctx, canvas.width, canvas.height);
 
@@ -270,14 +389,14 @@ export function useCameraBooth({
       const video = videoRef.current!;
       const recordingCanvas = recordingCanvasRef.current ?? document.createElement("canvas");
       recordingCanvasRef.current = recordingCanvas;
-      
-      if (rotation === 90 || rotation === 270) {
-        recordingCanvas.width = video.videoHeight || 960;
-        recordingCanvas.height = video.videoWidth || 720;
-      } else {
-        recordingCanvas.width = video.videoWidth || 720;
-        recordingCanvas.height = video.videoHeight || 960;
-      }
+
+      const recordingCrop = getCenterCropRect(
+        video.videoWidth || 1280,
+        video.videoHeight || 720,
+        CAPTURE_ASPECT_RATIO,
+      );
+      recordingCanvas.width = recordingCrop.sw;
+      recordingCanvas.height = recordingCrop.sh;
 
       recordedChunksRef.current = [];
       const stream = recordingCanvas.captureStream(30);
@@ -298,7 +417,7 @@ export function useCameraBooth({
             reader.readAsDataURL(blob);
           });
 
-          const posterImage = canvasRef.current!.toDataURL("image/jpeg", 0.92);
+          const posterImage = recordingCanvas.toDataURL("image/jpeg", 0.92);
           const next = await createCapture({
             sessionId, photos, mediaType: "video",
             sourceImage: posterImage, sourceVideo: videoDataUrl, renderedVideo: videoDataUrl,

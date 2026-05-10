@@ -78,6 +78,27 @@ export async function getStoredPhotos() {
     - Use modern typography (Google Fonts).
     - Implement smooth micro-animations for interactions.
 - **Responsiveness**: All containers must fit uniformly to the page width while maintaining their internal aspect ratio (e.g., using `aspect-ratio` or `object-fit`).
+- **Objective**:
+    - Use simple controls and eliminate redundant buttons (one source of truth per stage).
+    - Keep user-facing titles and instructions minimal; avoid verbose "assistant-like" copy.
+    - Ensure mobile-view compatibility for every stage and control surface.
+    - When recurring UI regressions appear, encode the fix as a documented rule here to prevent repeat work.
+
+### UI Objectives (Recurring Fixes)
+
+The following principles must be followed to prevent repeated work:
+
+1. **Simple Controls**: Eliminate complexity by having one source of truth per stage. Camera/Filter/Effect controls belong strictly on the camera overlay buttons.
+
+2. **Reduce Redundant Buttons**: Avoid multiple buttons serving the same purpose. Each action should have a single, clear control point.
+
+3. **Mobile-View Compatibility**: Every stage and control surface must be responsive and functional on mobile devices.
+
+4. **Eliminate AI-Agent Added Descriptions**: Remove verbose titles and descriptions added by AI agents (e.g., "Live Camera Booth", "Edit + Style", "FlashFrame" branding). Keep user-facing text minimal and functional.
+
+5. **Consistent Aspect Ratio**: All photo previews and captures must maintain a uniform 3:2 aspect ratio.
+
+6. **Uniform Padding/Margins**: Components must have consistent spacing across all wizard stages to prevent layout shifts.
 
 ## Validation & Types
 

@@ -41,6 +41,15 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
     return null;
   }
 
+  const rotated = rotation === 90 || rotation === 270;
+  const sourceWidth = (rotated ? videoHeight : videoWidth) || 1280;
+  const sourceHeight = (rotated ? videoWidth : videoHeight) || 720;
+  const coverScale = Math.max(displaySize.width / sourceWidth, displaySize.height / sourceHeight);
+  const drawnWidth = sourceWidth * coverScale;
+  const drawnHeight = sourceHeight * coverScale;
+  const offsetX = (displaySize.width - drawnWidth) / 2;
+  const offsetY = (displaySize.height - drawnHeight) / 2;
+
   const getPoint = (index: number) => {
     const landmark = landmarks[index];
     if (!landmark) return { x: 0, y: 0 };
@@ -63,8 +72,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
     }
 
     return {
-      x: x * displaySize.width,
-      y: y * displaySize.height,
+      x: x * drawnWidth + offsetX,
+      y: y * drawnHeight + offsetY,
     };
   };
 
@@ -187,8 +196,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
     const mouth = getPoint(FACE_LANDMARKS.mouth);
     const chin = getPoint(FACE_LANDMARKS.chin);
 
-    const mustacheWidth = videoWidth * 0.2;
-    const mustacheHeight = videoWidth * 0.05;
+    const mustacheWidth = displaySize.width * 0.2;
+    const mustacheHeight = displaySize.width * 0.05;
     const mustacheY = nose.y + (mouth.y - nose.y) * 0.6;
 
     return (
@@ -311,8 +320,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderSurprised = () => {
-    const leftEye = getPoint(LANDMARKS.leftEye);
-    const rightEye = getPoint(LANDMARKS.rightEye);
+    const leftEye = getPoint(FACE_LANDMARKS.leftEye);
+    const rightEye = getPoint(FACE_LANDMARKS.rightEye);
 
     const eyeRadius = videoWidth * 0.04;
 

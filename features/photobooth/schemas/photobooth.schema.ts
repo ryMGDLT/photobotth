@@ -138,6 +138,7 @@ export const photoRecordSchema = z.object({
   sourceVideo: z.string().min(1).optional(),
   renderedVideo: z.string().min(1).optional(),
   durationMs: z.number().min(0).optional(),
+  stripImages: z.array(z.string()).optional(),
   cameraFilter: cameraFilterPresetSchema.optional(),
   settings: editorSettingsSchema,
   layout: photoLayoutSchema,

@@ -3,9 +3,7 @@
 import Image from "next/image";
 import { Download, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   EditorSettings,
@@ -51,28 +49,10 @@ export function EditorPanel({
 
   return (
     <Card className="glass-panel border-white/60">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <CardTitle>Edit + Style</CardTitle>
-            <CardDescription>
-              {isVideo
-                ? "Short clips keep the live booth filter and retro vibe from the moment you record."
-                : "Choose a preset, fine-tune the mood, then pin your favorite."}
-            </CardDescription>
-          </div>
-          <Badge variant={activePhoto ? "secondary" : "outline"}>
-            {activePhoto
-              ? `${activePhoto.status} ${activePhoto.mediaType}`
-              : "No Shot"}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+      <CardContent className="px-4 py-4 sm:px-6 sm:py-6">
         {!activePhoto ? (
           <div className="space-y-4">
-            <Skeleton className="aspect-[4/5] w-full rounded-[1.6rem]" />
+            <Skeleton className="aspect-[3/2] w-full rounded-[1.6rem]" />
             <div className="grid grid-cols-3 gap-3">
               <Skeleton className="h-12 rounded-full" />
               <Skeleton className="h-12 rounded-full" />
@@ -84,14 +64,14 @@ export function EditorPanel({
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
-            <div className="overflow-hidden rounded-[1.6rem] border border-[color:var(--border)] bg-white/85">
+            <div className="relative overflow-hidden rounded-[1.6rem] border border-[color:var(--border)] bg-white/85">
               {isVideo && activePhoto.renderedVideo ? (
                 <video
                   src={activePhoto.renderedVideo}
                   poster={activePhoto.renderedImage}
                   controls
                   playsInline
-                  className="aspect-[4/5] w-full object-cover"
+                  className="aspect-[3/2] w-full object-cover"
                 />
               ) : (
                 <Image
@@ -100,9 +80,39 @@ export function EditorPanel({
                   width={800}
                   height={1000}
                   unoptimized
-                  className="aspect-[4/5] w-full object-cover"
+                  className="aspect-[3/2] w-full object-cover"
                 />
               )}
+
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 px-3">
+                <button
+                  type="button"
+                  className="retro-marquee flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#fff1d3] transition hover:brightness-110 disabled:opacity-60"
+                  onClick={() => onStatusChange("saved")}
+                  disabled={busy}
+                >
+                  <Star className="size-4" />
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full border border-[#c9a67c] bg-[#fffaf0]/95 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:bg-[#f6e0bb] disabled:opacity-60"
+                  onClick={() => onStatusChange("draft")}
+                  disabled={busy}
+                >
+                  <span className="size-4" />
+                  Draft
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full border border-[#c9a67c] bg-[#fffaf0]/95 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:bg-[#f6e0bb] disabled:opacity-60"
+                  onClick={onDownload}
+                  disabled={busy}
+                >
+                  <Download className="size-4" />
+                  Download
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-5">
@@ -204,39 +214,6 @@ export function EditorPanel({
                 </>
               )}
 
-              <div className="grid gap-3">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full rounded-full"
-                  onClick={() => onStatusChange("saved")}
-                  disabled={busy}
-                >
-                  <Star className="size-4" />
-                  Save
-                </Button>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="secondary"
-                  className="w-full rounded-full"
-                  onClick={() => onStatusChange("draft")}
-                  disabled={busy}
-                >
-                  Keep Draft
-                </Button>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="outline"
-                  className="w-full rounded-full"
-                  onClick={onDownload}
-                  disabled={busy}
-                >
-                  <Download className="size-4" />
-                  {isVideo ? "Download Clip" : "Download to Device"}
-                </Button>
-              </div>
             </div>
           </div>
         )}
