@@ -339,11 +339,14 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
     let downloadUrl = sourceUrl;
     let shouldRevoke = false;
 
-    // For Data URLs, convert to Blob for more reliable downloading in some browsers
+    // For Data URLs, convert to Blob without fetch (avoids CSP connect-src restriction)
     if (sourceUrl.startsWith("data:")) {
-      const response = await fetch(sourceUrl);
-      const blob = await response.blob();
-      downloadUrl = URL.createObjectURL(blob);
+      const [header, base64] = sourceUrl.split(",");
+      const mimeType = header.split(":")[1].split(";")[0];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      downloadUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
       shouldRevoke = true;
     }
 
