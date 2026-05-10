@@ -45,7 +45,7 @@ export function FramePicker({ selectedFrame, onFrameChange, disabled = false }: 
           <button
             key={frame.id}
             type="button"
-            className={`relative aspect-[3/4] w-full rounded-xl border-2 transition-all duration-200 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 ${
+            className={`relative aspect-[2.5/3.5] w-full rounded-xl border-2 transition-all duration-200 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 ${
               isSelected
                 ? "border-[color:var(--primary)] ring-2 ring-[color:var(--primary)]/20"
                 : "border-[color:var(--border)] hover:border-[color:var(--primary)]/50"
@@ -53,7 +53,7 @@ export function FramePicker({ selectedFrame, onFrameChange, disabled = false }: 
             onClick={() => onFrameChange(frame.id)}
             disabled={disabled}
           >
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
               <canvas
                 ref={(el) => {
                   canvasRefs.current[index] = el;
@@ -63,7 +63,7 @@ export function FramePicker({ selectedFrame, onFrameChange, disabled = false }: 
                 className="w-full h-full object-contain rounded-sm"
                 style={{ imageRendering: "crisp-edges" }}
               />
-              <span className="mt-1 text-xs font-medium text-[color:var(--foreground)] leading-tight">
+              <span className="mt-2 text-xs font-medium text-[color:var(--foreground)] leading-tight text-center">
                 {frame.name}
               </span>
             </div>

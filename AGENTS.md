@@ -135,6 +135,13 @@ The following rules must be followed for production/demo-ready code:
 5. **Memory Cleanup:** All `MediaStream`, `MediaRecorder`, and canvas contexts must be explicitly cleaned up on unmount.
 6. **Error User Feedback:** All errors must be surfaced to UI with clear messages, not just console logging.
 
+## Stability Guidelines
+
+- **Stop breaking features if they are stable and reusable** - Before modifying any working feature, consider if the change is necessary and test thoroughly
+- **Prioritize reusable components of Shadcn and Tailwind instead of creating new** - Use existing UI components and utilities before building custom solutions
+- **Test regressions before deploying** - Ensure existing functionality remains intact after changes
+- **Keep changes minimal and focused** - Avoid over-engineering solutions that could break existing features
+
 ## Final Rule
 
 When there is a conflict between complex AI features and performance, choose performance (keep the frame rate high).

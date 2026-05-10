@@ -251,7 +251,7 @@ function drawTextWatermark(
 
 function drawClassicCream(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#fffaf0";
   ctx.fillRect(0, 0, width, height);
@@ -268,7 +268,7 @@ function drawClassicCream(ctx: CanvasRenderingContext2D, width: number, height: 
 
 function drawDustyPink(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#e8a0b0";
   ctx.fillRect(0, 0, width, height);
@@ -285,7 +285,7 @@ function drawDustyPink(ctx: CanvasRenderingContext2D, width: number, height: num
 
 function drawTeal(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#5cb8b2";
   ctx.fillRect(0, 0, width, height);
@@ -302,7 +302,7 @@ function drawTeal(ctx: CanvasRenderingContext2D, width: number, height: number):
 
 function drawAmber(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#f5a623";
   ctx.fillRect(0, 0, width, height);
@@ -319,7 +319,7 @@ function drawAmber(ctx: CanvasRenderingContext2D, width: number, height: number)
 
 function drawLavender(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#b39ddb";
   ctx.fillRect(0, 0, width, height);
@@ -336,7 +336,7 @@ function drawLavender(ctx: CanvasRenderingContext2D, width: number, height: numb
 
 function drawDiagonalStripes(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#fffaf0";
   ctx.fillRect(0, 0, width, height);
@@ -373,7 +373,7 @@ function drawDiagonalStripes(ctx: CanvasRenderingContext2D, width: number, heigh
 
 function drawDots(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#fffaf0";
   ctx.fillRect(0, 0, width, height);
@@ -419,7 +419,7 @@ function drawDots(ctx: CanvasRenderingContext2D, width: number, height: number):
 
 function drawHearts(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   ctx.fillStyle = "#fffaf0";
   ctx.fillRect(0, 0, width, height);
@@ -461,7 +461,7 @@ function drawHearts(ctx: CanvasRenderingContext2D, width: number, height: number
 
 function drawPastelGradient(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   // Create gradient
   const gradient = ctx.createLinearGradient(0, 0, width, 0);
@@ -657,7 +657,7 @@ function drawPastelGradientStrip(ctx: CanvasRenderingContext2D, width: number, h
 
 function drawMottledTeal(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   // Draw mottled texture background
   drawMottledTexture(ctx, 0, 0, width, height, {
@@ -691,7 +691,7 @@ function drawMottledTeal(ctx: CanvasRenderingContext2D, width: number, height: n
 
 function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   // Draw base purple background
   ctx.fillStyle = "#8b5cf6";
@@ -740,7 +740,7 @@ function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height
 
 function drawCoralPolka(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   // Draw coral background
   ctx.fillStyle = "#fb7185";
@@ -787,7 +787,7 @@ function drawCoralPolka(ctx: CanvasRenderingContext2D, width: number, height: nu
 
 function drawBlueHearts(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   const framePadding = 24;
-  const bottomPadding = 100;
+  const bottomPadding = 60;
   
   // Draw blue background
   ctx.fillStyle = "#3b82f6";
@@ -1016,7 +1016,7 @@ export const FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
   },
   "textured-purple": {
     id: "textured-purple",
-    name: "Textured Purple",
+    name: "Dark Purple",
     watermarkColor: "#fffaf0",
     draw: drawTexturedPurple,
   },
@@ -1097,7 +1097,7 @@ export const STRIP_FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
   },
   "textured-purple": {
     id: "textured-purple",
-    name: "Textured Purple",
+    name: "Dark Purple",
     watermarkColor: "#fffaf0",
     draw: drawTexturedPurpleStrip,
   },

@@ -192,11 +192,11 @@ async function renderSinglePhoto(
     if (isPreview) {
       // Use fixed small padding for preview
       framePadding = 24;
-      bottomPadding = 100;
+      bottomPadding = 60;
     } else {
       // Scale padding for high quality
       framePadding = Math.round(24 * (targetPhotoWidth / image.naturalWidth));
-      bottomPadding = Math.round(100 * (targetPhotoWidth / image.naturalWidth));
+      bottomPadding = Math.round(60 * (targetPhotoWidth / image.naturalWidth));
     }
     
     const finalPhotoWidth = processedImage.naturalWidth;
