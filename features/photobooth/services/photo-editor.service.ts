@@ -134,12 +134,12 @@ async function renderSinglePhoto(
   context.lineWidth = 1;
   context.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
 
-  // Add FLASHFRAME watermark
+  // Add FLASHFRAME watermark - proportional to image width
+  const fontSize = Math.max(54, Math.floor(canvas.width * 0.13)); // 13% of width, min 54px
   context.fillStyle = "#4a445e";
-  context.font = "600 24px var(--font-geist-sans), sans-serif";
+  context.font = `700 ${fontSize}px var(--font-geist-sans), sans-serif`;
   context.textAlign = "center";
-  context.letterSpacing = "0.2em";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 36);
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - Math.floor(bottomPadding / 2.5));
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }
@@ -194,14 +194,12 @@ async function renderStripPhoto(
     context.drawImage(tempCanvas, x, y, innerWidth, slotHeight);
   });
 
-  // Draw retro finish on the whole strip (border only, no vignette)
-  drawRetroFinish(context, canvas.width, canvas.height - footerHeight);
-
+  // Add FLASHFRAME watermark - proportional to image width
+  const fontSize = Math.max(32, Math.floor(canvas.width * 0.10)); // 10% of width, min 32px
   context.fillStyle = "#4a445e";
-  context.font = "600 24px var(--font-geist-sans), sans-serif";
+  context.font = `700 ${fontSize}px var(--font-geist-sans), sans-serif`;
   context.textAlign = "center";
-  context.letterSpacing = "0.2em";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 40);
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - Math.floor(footerHeight / 2.5));
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }
