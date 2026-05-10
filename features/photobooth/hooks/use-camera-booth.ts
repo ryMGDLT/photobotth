@@ -458,9 +458,24 @@ export function useCameraBooth({
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") return;
     if (recordingAnimationFrameRef.current) window.cancelAnimationFrame(recordingAnimationFrameRef.current);
     if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
+
+    // Stop MediaRecorder and release associated resources
+    const recorder = mediaRecorderRef.current;
+    const recordingCanvas = recordingCanvasRef.current;
+
+    recorder.onstop = null;
+    recorder.ondataavailable = null;
+    recorder.stop();
+
+    // Stop all tracks from the canvas capture stream to free resources
+    if (recordingCanvas) {
+      const stream = recordingCanvas.captureStream(0);
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
     isRecordingRef.current = false;
     setIsRecording(false);
-    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current = null;
   }
 
   return {

@@ -281,15 +281,24 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
   const sourceUrl = isVideo ? photo.renderedVideo! : photo.renderedImage;
   const extension = isVideo ? "webm" : "jpg";
 
-  // Sanitize filename: use provided name or fallback, remove spaces, force extension
-  const baseName = (photo.name || `flashframe-${photo.mediaType}-${photo.id.slice(-6)}`)
+  // Sanitize filename: prevent path traversal, remove special chars, normalize
+  const rawName = photo.name || `flashframe-${photo.mediaType}-${photo.id.slice(-6)}`;
+  const baseName = rawName
     .trim()
+    .toLowerCase()
+    // Remove path traversal characters and special symbols
+    .replace(/[\\/:*?"<>|]/g, "")
+    // Replace whitespace and consecutive dashes with single dash
     .replace(/\s+/g, "-")
-    .toLowerCase();
-  
-  const fileName = baseName.endsWith(`.${extension}`) 
-    ? baseName 
-    : `${baseName}.${extension}`;
+    .replace(/-+/g, "-")
+    // Remove any non-alphanumeric except dashes and dots
+    .replace(/[^a-z0-9\-.]/g, "")
+    // Limit length to prevent issues
+    .slice(0, 100);
+
+  const fileName = baseName.endsWith(`.${extension}`)
+    ? baseName
+    : `${baseName || "flashframe-photo"}.${extension}`;
 
   try {
     let downloadUrl = sourceUrl;

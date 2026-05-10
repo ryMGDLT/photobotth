@@ -283,7 +283,7 @@ function IconAction({ label, icon, onClick, disabled }: IconActionProps) {
   return (
     <button
       type="button"
-      className="flex min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-[#caa478] bg-[#fff9f0] px-2 py-3 text-center text-xs font-semibold text-[color:var(--foreground)] transition hover:bg-[#f6e1be] disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-2 rounded-2xl border border-[#caa478] bg-[#fff9f0] px-2 py-3 text-center text-xs font-semibold text-[color:var(--foreground)] transition hover:bg-[#f6e1be] disabled:cursor-not-allowed disabled:opacity-50"
       onClick={onClick}
       disabled={disabled}
     >

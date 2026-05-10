@@ -97,7 +97,7 @@ export function CameraStage({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetTab, setSheetTab] = useState<"mode" | "filters" | "effects">("mode");
   const cameraContainerRef = useRef<HTMLDivElement>(null);
-  const videoSizeRef = useRef({ width: 0, height: 0 });
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
 
   // Effects that support face tracking
   const faceTrackedEffects = [
@@ -118,26 +118,23 @@ export function CameraStage({
 
   // Track video dimensions for overlay scaling
   useEffect(() => {
-    if (videoRef.current) {
-      const updateVideoSize = () => {
-        if (videoRef.current) {
-          videoSizeRef.current = {
-            width: videoRef.current.videoWidth || 640,
-            height: videoRef.current.videoHeight || 480,
-          };
-        }
-      };
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
 
-      videoRef.current.addEventListener("loadedmetadata", updateVideoSize);
-      updateVideoSize();
+    const updateVideoSize = () => {
+      setVideoDimensions({
+        width: videoElement.videoWidth || 640,
+        height: videoElement.videoHeight || 480,
+      });
+    };
 
-      return () => {
-        if (videoRef.current) {
-          videoRef.current.removeEventListener("loadedmetadata", updateVideoSize);
-        }
-      };
-    }
-  }, [cameraReady]);
+    videoElement.addEventListener("loadedmetadata", updateVideoSize);
+    updateVideoSize();
+
+    return () => {
+      videoElement.removeEventListener("loadedmetadata", updateVideoSize);
+    };
+  }, [cameraReady, videoRef]);
 
   const filteredFilters = cameraFilters.filter((filter) =>
     filter.label.toLowerCase().includes(filterSearch.toLowerCase())
@@ -229,14 +226,14 @@ export function CameraStage({
                       style={{ background: activeEffectCss }}
                     />
                   )}
-                  {shouldUseFaceTracking && landmarks && (
+                  {shouldUseFaceTracking && landmarks && videoDimensions.width > 0 && (
                     <div className="absolute inset-0 pointer-events-none">
                       <FaceOverlay
                         landmarks={landmarks}
                         effect={activeEffect}
-                        videoWidth={videoSizeRef.current.width}
-                        videoHeight={videoSizeRef.current.height}
-                        videoElement={videoRef.current}
+                        videoWidth={videoDimensions.width}
+                        videoHeight={videoDimensions.height}
+                        containerElement={cameraContainerRef.current}
                         rotation={rotation}
                       />
                     </div>
@@ -311,13 +308,13 @@ export function CameraStage({
                 <button
                   type="button"
                   onClick={toggleFullscreen}
-                  className="absolute right-3 top-3 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition z-10"
+                  className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full border border-[#c9a67c] bg-[#fffaf0] text-foreground hover:bg-[#f6e0bb] transition z-10"
                   title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                 >
                   {isFullscreen ? (
-                    <Minimize className="size-4" />
+                    <Minimize className="size-5" />
                   ) : (
-                    <Maximize className="size-4" />
+                    <Maximize className="size-5" />
                   )}
                 </button>
               ) : null}
@@ -326,10 +323,10 @@ export function CameraStage({
                 <button
                   type="button"
                   onClick={handleRotate}
-                  className="absolute right-3 top-14 rounded-full border border-[#c9a67c] bg-[#fffaf0] p-2 text-foreground hover:bg-[#f6e0bb] transition z-10"
+                  className="absolute right-3 top-14 flex h-11 w-11 items-center justify-center rounded-full border border-[#c9a67c] bg-[#fffaf0] text-foreground hover:bg-[#f6e0bb] transition z-10"
                   title="Rotate Camera"
                 >
-                  <RefreshCcw className="size-4" />
+                  <RefreshCcw className="size-5" />
                 </button>
               ) : null}
 
@@ -339,10 +336,10 @@ export function CameraStage({
                     type="button"
                     onClick={onToggleCountdown}
                     disabled={busy}
-                    className={`rounded-full border px-3 py-3 text-foreground transition ${
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border transition ${
                       countdownEnabled
                         ? "retro-marquee border-transparent text-[#fff1d3]"
-                        : "border-[#c9a67c] bg-[#fffaf0] hover:bg-[#f6e0bb]"
+                        : "border-[#c9a67c] bg-[#fffaf0] text-foreground hover:bg-[#f6e0bb]"
                     }`}
                     title={countdownEnabled ? "Countdown On" : "Countdown Off"}
                   >

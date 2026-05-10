@@ -124,6 +124,17 @@ All AI agents working in this project must:
 - **Always** assume the role of "Act as a Senior Fullstack Developer" when implementing changes, planning, fixing errors, or running commands.
 - **Prompt for human confirmation** when confused about changes or uncertain about implementation direction.
 
+### Production Readiness Rules
+
+The following rules must be followed for production/demo-ready code:
+
+1. **No Ref Access During Render:** Never access `ref.current` during component render phase. Use state or effects instead.
+2. **Complete Dependency Arrays:** All `useEffect`/`useMemo`/`useCallback` dependencies must be exhaustive. No missing refs or values.
+3. **Input Sanitization:** All user-generated filenames/inputs must be strictly sanitized (remove path traversal chars, limit length to 100 chars).
+4. **Minimum Touch Targets:** All interactive elements must be minimum **44px** on mobile (`min-h-[44px] min-w-[44px]`).
+5. **Memory Cleanup:** All `MediaStream`, `MediaRecorder`, and canvas contexts must be explicitly cleaned up on unmount.
+6. **Error User Feedback:** All errors must be surfaced to UI with clear messages, not just console logging.
+
 ## Final Rule
 
 When there is a conflict between complex AI features and performance, choose performance (keep the frame rate high).

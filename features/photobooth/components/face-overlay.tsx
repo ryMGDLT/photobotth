@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { FaceLandmarks } from "@/hooks/use-face-detection";
 import { FACE_LANDMARKS } from "@/features/photobooth/utils/face-renderer";
 
@@ -9,20 +9,20 @@ interface FaceOverlayProps {
   effect: string;
   videoWidth: number;
   videoHeight: number;
-  videoElement: HTMLVideoElement | null;
+  containerElement?: HTMLElement | null;
   rotation: number;
 }
 
 // MediaPipe Face Mesh landmark indices for key facial features are imported from face-renderer
 
-export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoElement, rotation }: FaceOverlayProps) {
+export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, containerElement, rotation }: FaceOverlayProps) {
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    if (!videoElement) return;
+    if (!containerElement) return;
 
     const updateSize = () => {
-      const rect = videoElement.getBoundingClientRect();
+      const rect = containerElement.getBoundingClientRect();
       setDisplaySize({
         width: rect.width,
         height: rect.height,
@@ -35,7 +35,7 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
     return () => {
       clearInterval(interval);
     };
-  }, [videoElement]);
+  }, [containerElement]);
 
   if (!landmarks || landmarks.length === 0 || effect === "none" || displaySize.width === 0) {
     return null;
