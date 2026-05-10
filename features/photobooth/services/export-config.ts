@@ -102,12 +102,12 @@ export const EXPORT_PRESETS: Record<string, ExportPreset> = {
  * Default export configuration
  */
 export const DEFAULT_EXPORT_CONFIG: ExportQualityConfig = {
-  resolution: '4k',
-  format: 'png',
-  quality: 1.0,
-  enableUpscaling: true,
-  enableHighDPI: true,
-  scalingQuality: 'high'
+  resolution: 'original',
+  format: 'jpeg',
+  quality: 0.9,
+  enableUpscaling: false,
+  enableHighDPI: false,
+  scalingQuality: 'medium'
 };
 
 /**

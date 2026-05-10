@@ -231,7 +231,7 @@ async function renderSinglePhoto(
 
     // Draw frame using the frame registry
     const scale = isPreview ? 1 : (ctx as any).scale || 1;
-    drawFrame(ctx, canvas.width * scale, canvas.height * scale, frame);
+    drawFrame(ctx, canvas.width, canvas.height, frame, false); // Explicitly single frame
 
     // Create temporary canvas for photo with filters
     const photoCanvas = document.createElement("canvas");
@@ -284,10 +284,22 @@ async function renderStripPhoto(
   sourceImages: string[],
   settings: EditorSettings,
   frameId?: PhotoFrameId,
+  usePreviewMode?: boolean
 ): Promise<string> {
-  const images = await Promise.all(sourceImages.map((source) => loadImage(source)));
-  const frame = frameId ?? getDefaultFrame();
-  const exportConfig = getCurrentExportConfig();
+  // Determine quality mode outside the async function
+  const isPreview = usePreviewMode ?? performanceManager.shouldUsePreviewMode();
+  
+  return withPerformanceTracking(async () => {
+    const images = await Promise.all(sourceImages.map((source) => loadImage(source)));
+    const frame = frameId ?? getDefaultFrame();
+    const exportConfig = isPreview ? PREVIEW_CONFIG : getCurrentExportConfig();
+
+  // Check cache first for strip photos
+  const imageHash = cacheManager.generateImageHash(sourceImages.join('|'));
+  const cachedResult = cacheManager.getComposite(imageHash, frame, isPreview ? 'preview' : 'high');
+  if (cachedResult) {
+    return cachedResult;
+  }
 
   // Calculate target dimensions for strip photos
   const firstImage = images[0];
@@ -298,31 +310,47 @@ async function renderStripPhoto(
   );
 
   // Scale strip dimensions proportionally
-  const scaleFactor = targetPhotoWidth / 340; // Base inner width is 340
-  const framePadding = Math.round(22 * scaleFactor);
-  const innerWidth = Math.round(340 * scaleFactor);
-  const slotHeight = Math.round(220 * scaleFactor);
-  const gap = Math.round(16 * scaleFactor);
-  const footerHeight = Math.round(84 * scaleFactor);
+  const stripScale = 0.85;
+  const stripWidth = targetPhotoWidth * stripScale;
+  const stripHeight = targetPhotoHeight * stripScale * 3 + 84; // 3 photos + footer
 
-  // Create high-DPI canvas for strip
-  const totalWidth = innerWidth + framePadding * 2;
-  const totalHeight = framePadding * 2 + slotHeight * images.length + gap * (images.length - 1) + footerHeight;
+  // Create canvas (simple for preview, high-DPI for export)
+  const footerHeight = isPreview ? 84 : Math.round(84 * (targetPhotoWidth / firstImage.naturalWidth));
+  const totalWidth = stripWidth + 48; // 24 * 2
+  const totalHeight = stripHeight + 48; // 24 * 2
   
-  const highDPICanvas = createMemoryEfficientCanvas(
-    totalWidth,
-    totalHeight,
-    exportConfig.enableHighDPI
-  );
-
-  configureCanvasForHighQuality(highDPICanvas.context);
+  let canvas: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D;
+  let scale = 1;
+  
+  if (isPreview) {
+    // Simple canvas for preview
+    canvas = document.createElement("canvas");
+    canvas.width = totalWidth;
+    canvas.height = totalHeight;
+    ctx = canvas.getContext("2d")!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'medium';
+    scale = 1;
+  } else {
+    // High-DPI canvas for export
+    const highDPICanvas = createMemoryEfficientCanvas(
+      totalWidth,
+      totalHeight,
+      exportConfig.enableHighDPI
+    );
+    canvas = highDPICanvas.canvas;
+    ctx = highDPICanvas.context;
+    configureCanvasForHighQuality(ctx);
+    scale = highDPICanvas.scale;
+  }
 
   // Draw frame using the frame registry (strip version)
-  drawFrame(highDPICanvas.context, highDPICanvas.actualWidth, highDPICanvas.actualHeight, frame, true);
+  drawFrame(ctx, canvas.width, canvas.height, frame, true);
 
-  // Process and upscale images if needed
+  // Process and upscale images if needed (only for high quality)
   let processedImages = images;
-  if (exportConfig.enableUpscaling && 
+  if (!isPreview && exportConfig.enableUpscaling && 
       (targetPhotoWidth > firstImage.naturalWidth || targetPhotoHeight > firstImage.naturalHeight)) {
     
     processedImages = await Promise.all(images.map(async (image) => {
@@ -348,11 +376,18 @@ async function renderStripPhoto(
     }));
   }
 
+  // Strip layout dimensions
+  const framePadding = 24;
+  const innerWidth = stripWidth;
+  const innerHeight = stripHeight - footerHeight;
+  const slotHeight = innerHeight / 3;
+  const gap = 6;
+
   // Render each image with filters and vignette applied individually
   processedImages.forEach((image, index) => {
-    const scale = Math.max(innerWidth / image.naturalWidth, slotHeight / image.naturalHeight);
-    const drawnWidth = image.naturalWidth * scale;
-    const drawnHeight = image.naturalHeight * scale;
+    const imageScale = Math.max(innerWidth / image.naturalWidth, slotHeight / image.naturalHeight);
+    const drawnWidth = image.naturalWidth * imageScale;
+    const drawnHeight = image.naturalHeight * imageScale;
     const x = framePadding + (innerWidth - drawnWidth) / 2;
     const y = framePadding + index * (slotHeight + gap) + (slotHeight - drawnHeight) / 2;
 
@@ -372,17 +407,25 @@ async function renderStripPhoto(
     drawVignette(tempCtx, innerWidth, slotHeight, settings.vignette);
 
     // Draw the processed image to main canvas (accounting for DPI scaling)
-    highDPICanvas.context.drawImage(
+    ctx.drawImage(
       tempCanvas, 
-      x * highDPICanvas.scale, 
-      y * highDPICanvas.scale, 
-      innerWidth * highDPICanvas.scale, 
-      slotHeight * highDPICanvas.scale
+      x * scale, 
+      y * scale, 
+      innerWidth * scale, 
+      slotHeight * scale
     );
   });
 
   // Export with configured format and quality
-  return highDPICanvasToDataURL(highDPICanvas, exportConfig.format, exportConfig.quality);
+  const result = isPreview 
+    ? canvas.toDataURL("image/jpeg", exportConfig.quality)
+    : highDPICanvasToDataURL({ canvas, context: ctx, scale, logicalWidth: totalWidth, logicalHeight: totalHeight, actualWidth: canvas.width, actualHeight: canvas.height }, exportConfig.format, exportConfig.quality);
+
+  // Cache the result
+  cacheManager.setComposite(imageHash, frame, isPreview ? 'preview' : 'high', result);
+
+  return result;
+  }, `renderStripPhoto-${isPreview ? 'preview' : 'high'}`);
 }
 
 export async function renderPhotoDataUrl(options: {
@@ -397,8 +440,8 @@ export async function renderPhotoDataUrl(options: {
     const stripSources =
       options.stripSources && options.stripSources.length > 0
         ? options.stripSources.slice(0, 3)
-        : [options.sourceImage];
-    return renderStripPhoto(stripSources, options.settings, options.frame);
+        : [options.sourceImage, options.sourceImage, options.sourceImage]; // Ensure 3 images for strip
+    return renderStripPhoto(stripSources, options.settings, options.frame, options.usePreviewMode);
   }
 
   return renderSinglePhoto(options.sourceImage, options.settings, options.frame, options.usePreviewMode);

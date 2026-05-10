@@ -693,13 +693,28 @@ function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height
   const framePadding = 24;
   const bottomPadding = 100;
   
-  // Draw fine grain texture background
+  // Draw base purple background
+  ctx.fillStyle = "#8b5cf6";
+  ctx.fillRect(0, 0, width, height);
+  
+  // Draw fine grain texture only on frame area (outside photo area)
+  ctx.save();
+  
+  // Create clipping path for frame area
+  ctx.beginPath();
+  ctx.rect(0, 0, width, height);
+  ctx.rect(framePadding, framePadding, width - framePadding * 2, height - framePadding - bottomPadding);
+  ctx.clip("evenodd");
+  
+  // Apply grain texture to frame area only
   drawGrainTexture(ctx, 0, 0, width, height, {
     baseColor: "#8b5cf6",
     textureColor: "#6d28d9",
     density: 0.8,
     opacity: 0.15,
   });
+  
+  ctx.restore();
   
   const photoWidth = width - framePadding * 2;
   const photoHeight = height - framePadding - bottomPadding;
@@ -840,13 +855,28 @@ function drawTexturedPurpleStrip(ctx: CanvasRenderingContext2D, width: number, h
   const framePadding = 22;
   const footerHeight = 84;
   
-  // Draw fine grain texture background
+  // Draw base purple background
+  ctx.fillStyle = "#8b5cf6";
+  ctx.fillRect(0, 0, width, height);
+  
+  // Draw fine grain texture only on frame area
+  ctx.save();
+  
+  // Create clipping path for frame area (outside photo strip area)
+  ctx.beginPath();
+  ctx.rect(0, 0, width, height);
+  ctx.rect(framePadding, framePadding, width - framePadding * 2, height - framePadding - footerHeight);
+  ctx.clip("evenodd");
+  
+  // Apply grain texture to frame area only
   drawGrainTexture(ctx, 0, 0, width, height, {
     baseColor: "#8b5cf6",
     textureColor: "#6d28d9",
     density: 0.8,
     opacity: 0.15,
   });
+  
+  ctx.restore();
   
   // Add dark purple tape on top-right
   drawTapeElement(ctx, {
