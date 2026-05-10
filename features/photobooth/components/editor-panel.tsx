@@ -64,24 +64,39 @@ export function EditorPanel({
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
-            <div className="relative overflow-hidden rounded-[1.6rem] border border-[color:var(--border)] bg-white/85">
+            <div className="relative overflow-hidden rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-4">
               {isVideo && activePhoto.renderedVideo ? (
                 <video
                   src={activePhoto.renderedVideo}
                   poster={activePhoto.renderedImage}
                   controls
                   playsInline
-                  className="aspect-[3/2] w-full object-cover"
+                  className="aspect-[3/2] w-full object-cover rounded-[1.2rem]"
                 />
+              ) : layout === "strip" ? (
+                <div className="flex flex-col gap-2 overflow-y-auto rounded-[1.2rem] bg-[#2a2435] p-3">
+                  {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
+                    <div key={idx} className="relative aspect-[3/2] w-full overflow-hidden rounded-lg">
+                      <Image
+                        src={img}
+                        alt={`Strip photo ${idx + 1}`}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <Image
-                  src={activePhoto.renderedImage}
-                  alt={activePhoto.name ?? "Selected photobooth shot"}
-                  width={800}
-                  height={1000}
-                  unoptimized
-                  className="aspect-[3/2] w-full object-cover"
-                />
+                <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1.2rem]">
+                  <Image
+                    src={activePhoto.renderedImage}
+                    alt={activePhoto.name ?? "Selected photobooth shot"}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
               )}
 
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 px-3">
