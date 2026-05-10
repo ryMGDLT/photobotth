@@ -1,4 +1,17 @@
 import type { FrameDefinition, PhotoFrameId } from "@/features/photobooth/types/frame.types";
+import {
+  drawMottledTexture,
+  drawGrainTexture,
+  drawPolkaDotPattern,
+  drawTapeElement,
+  drawLeafyEmbellishment,
+  drawPatternedBorder,
+  type TextureOptions,
+  type TapeOptions,
+  type PolkaDotOptions,
+  type LeafyOptions,
+  type BorderPatternOptions,
+} from "@/features/photobooth/services/frame-drawing-utils";
 
 function drawWatermark(
   ctx: CanvasRenderingContext2D,
@@ -425,6 +438,276 @@ function drawPastelGradientStrip(ctx: CanvasRenderingContext2D, width: number, h
   drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
+// Complex Frame Implementations
+
+function drawMottledTeal(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 24;
+  const bottomPadding = 100;
+  
+  // Draw mottled texture background
+  drawMottledTexture(ctx, 0, 0, width, height, {
+    baseColor: "#5cb8b2",
+    textureColor: "#4a9d94",
+    density: 0.2,
+    opacity: 0.4,
+  });
+  
+  const photoWidth = width - framePadding * 2;
+  const photoHeight = height - framePadding - bottomPadding;
+  
+  // Add photo area shadow
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
+  
+  // Add yellow tape element on top-right
+  drawTapeElement(ctx, {
+    x: width - 80,
+    y: 15,
+    width: 60,
+    height: 25,
+    color: "#f5d547",
+    angle: -0.15,
+    opacity: 0.9,
+  });
+  
+  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+}
+
+function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 24;
+  const bottomPadding = 100;
+  
+  // Draw fine grain texture background
+  drawGrainTexture(ctx, 0, 0, width, height, {
+    baseColor: "#8b5cf6",
+    textureColor: "#6d28d9",
+    density: 0.8,
+    opacity: 0.15,
+  });
+  
+  const photoWidth = width - framePadding * 2;
+  const photoHeight = height - framePadding - bottomPadding;
+  
+  // Add subtle photo area shadow
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.12)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
+  
+  // Add dark purple tape on top-right
+  drawTapeElement(ctx, {
+    x: width - 75,
+    y: 20,
+    width: 55,
+    height: 20,
+    color: "#6d28d9",
+    angle: -0.1,
+    opacity: 0.85,
+  });
+  
+  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+}
+
+function drawCoralPolka(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 24;
+  const bottomPadding = 100;
+  
+  // Draw coral background
+  ctx.fillStyle = "#fb7185";
+  ctx.fillRect(0, 0, width, height);
+  
+  // Add polka dot pattern
+  drawPolkaDotPattern(ctx, 0, 0, width, height, {
+    dotColor: "rgba(255, 255, 255, 0.6)",
+    spacing: 20,
+    size: 8,
+    opacity: 0.7,
+  });
+  
+  const photoWidth = width - framePadding * 2;
+  const photoHeight = height - framePadding - bottomPadding;
+  
+  // Add photo area shadow
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
+  
+  // Add blue tape on top-left
+  drawTapeElement(ctx, {
+    x: 20,
+    y: 15,
+    width: 55,
+    height: 22,
+    color: "#3b82f6",
+    angle: 0.12,
+    opacity: 0.9,
+  });
+  
+  // Add yellow leafy embellishment on bottom-right
+  drawLeafyEmbellishment(ctx, {
+    x: width - 60,
+    y: height - bottomPadding + 20,
+    size: 25,
+    color: "#f5d547",
+    density: 4,
+  });
+  
+  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+}
+
+function drawBlueHearts(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 24;
+  const bottomPadding = 100;
+  
+  // Draw blue background
+  ctx.fillStyle = "#3b82f6";
+  ctx.fillRect(0, 0, width, height);
+  
+  const photoWidth = width - framePadding * 2;
+  const photoHeight = height - framePadding - bottomPadding;
+  
+  // Add photo area shadow
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
+  
+  // Add dark blue tape on top-left
+  drawTapeElement(ctx, {
+    x: 25,
+    y: 18,
+    width: 50,
+    height: 20,
+    color: "#1e40af",
+    angle: 0.08,
+    opacity: 0.9,
+  });
+  
+  // Add heart pattern along bottom edge
+  drawPatternedBorder(ctx, framePadding, height - bottomPadding + 10, width - framePadding, height - bottomPadding + 10, {
+    shape: 'heart',
+    size: 12,
+    spacing: 18,
+    color: "rgba(255, 255, 255, 0.7)",
+    opacity: 0.8,
+  });
+  
+  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+}
+
+// Strip versions of complex frames
+function drawMottledTealStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 22;
+  const footerHeight = 84;
+  
+  // Draw mottled texture background
+  drawMottledTexture(ctx, 0, 0, width, height, {
+    baseColor: "#5cb8b2",
+    textureColor: "#4a9d94",
+    density: 0.2,
+    opacity: 0.4,
+  });
+  
+  // Add yellow tape element on top-right
+  drawTapeElement(ctx, {
+    x: width - 60,
+    y: 12,
+    width: 45,
+    height: 18,
+    color: "#f5d547",
+    angle: -0.15,
+    opacity: 0.9,
+  });
+  
+  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+}
+
+function drawTexturedPurpleStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 22;
+  const footerHeight = 84;
+  
+  // Draw fine grain texture background
+  drawGrainTexture(ctx, 0, 0, width, height, {
+    baseColor: "#8b5cf6",
+    textureColor: "#6d28d9",
+    density: 0.8,
+    opacity: 0.15,
+  });
+  
+  // Add dark purple tape on top-right
+  drawTapeElement(ctx, {
+    x: width - 55,
+    y: 15,
+    width: 40,
+    height: 15,
+    color: "#6d28d9",
+    angle: -0.1,
+    opacity: 0.85,
+  });
+  
+  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+}
+
+function drawCoralPolkaStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 22;
+  const footerHeight = 84;
+  
+  // Draw coral background
+  ctx.fillStyle = "#fb7185";
+  ctx.fillRect(0, 0, width, height);
+  
+  // Add polka dot pattern
+  drawPolkaDotPattern(ctx, 0, 0, width, height, {
+    dotColor: "rgba(255, 255, 255, 0.6)",
+    spacing: 16,
+    size: 6,
+    opacity: 0.7,
+  });
+  
+  // Add blue tape on top-left
+  drawTapeElement(ctx, {
+    x: 15,
+    y: 12,
+    width: 40,
+    height: 16,
+    color: "#3b82f6",
+    angle: 0.12,
+    opacity: 0.9,
+  });
+  
+  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+}
+
+function drawBlueHeartsStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const framePadding = 22;
+  const footerHeight = 84;
+  
+  // Draw blue background
+  ctx.fillStyle = "#3b82f6";
+  ctx.fillRect(0, 0, width, height);
+  
+  // Add dark blue tape on top-left
+  drawTapeElement(ctx, {
+    x: 18,
+    y: 14,
+    width: 35,
+    height: 14,
+    color: "#1e40af",
+    angle: 0.08,
+    opacity: 0.9,
+  });
+  
+  // Add heart pattern along bottom edge
+  drawPatternedBorder(ctx, framePadding, height - footerHeight + 8, width - framePadding, height - footerHeight + 8, {
+    shape: 'heart',
+    size: 8,
+    spacing: 12,
+    color: "rgba(255, 255, 255, 0.7)",
+    opacity: 0.8,
+  });
+  
+  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+}
+
 export const FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
   "classic-cream": {
     id: "classic-cream",
@@ -479,6 +762,30 @@ export const FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
     name: "Pastel",
     watermarkColor: "#4a445e",
     draw: drawPastelGradient,
+  },
+  "mottled-teal": {
+    id: "mottled-teal",
+    name: "Mottled Teal",
+    watermarkColor: "#fffaf0",
+    draw: drawMottledTeal,
+  },
+  "textured-purple": {
+    id: "textured-purple",
+    name: "Textured Purple",
+    watermarkColor: "#fffaf0",
+    draw: drawTexturedPurple,
+  },
+  "coral-polka": {
+    id: "coral-polka",
+    name: "Coral Polka",
+    watermarkColor: "#fffaf0",
+    draw: drawCoralPolka,
+  },
+  "blue-hearts": {
+    id: "blue-hearts",
+    name: "Blue Hearts",
+    watermarkColor: "#fffaf0",
+    draw: drawBlueHearts,
   },
 };
 
@@ -536,6 +843,30 @@ export const STRIP_FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
     name: "Pastel",
     watermarkColor: "#4a445e",
     draw: drawPastelGradientStrip,
+  },
+  "mottled-teal": {
+    id: "mottled-teal",
+    name: "Mottled Teal",
+    watermarkColor: "#fffaf0",
+    draw: drawMottledTealStrip,
+  },
+  "textured-purple": {
+    id: "textured-purple",
+    name: "Textured Purple",
+    watermarkColor: "#fffaf0",
+    draw: drawTexturedPurpleStrip,
+  },
+  "coral-polka": {
+    id: "coral-polka",
+    name: "Coral Polka",
+    watermarkColor: "#fffaf0",
+    draw: drawCoralPolkaStrip,
+  },
+  "blue-hearts": {
+    id: "blue-hearts",
+    name: "Blue Hearts",
+    watermarkColor: "#fffaf0",
+    draw: drawBlueHeartsStrip,
   },
 };
 

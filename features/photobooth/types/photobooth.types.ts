@@ -1,16 +1,10 @@
 export type PhotoStatus = "draft" | "saved";
 export type MediaType = "photo" | "video";
 
-export type PhotoFrameId =
-  | "classic-cream"
-  | "dusty-pink"
-  | "teal"
-  | "amber"
-  | "lavender"
-  | "diagonal-stripes"
-  | "dots"
-  | "hearts"
-  | "pastel-gradient";
+import type { PhotoFrameId } from "./frame.types";
+
+// Re-export for convenience
+export type { PhotoFrameId };
 
 export type PhotoStylePreset =
   | "original"

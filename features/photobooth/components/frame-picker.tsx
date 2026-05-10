@@ -37,7 +37,7 @@ export function FramePicker({ selectedFrame, onFrameChange, disabled = false }: 
   const frames = getAllFrames();
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-4 gap-3">
       {frames.map((frame, index) => {
         const isSelected = selectedFrame === frame.id;
         

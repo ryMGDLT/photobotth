@@ -7,7 +7,11 @@ export type PhotoFrameId =
   | "diagonal-stripes"
   | "dots"
   | "hearts"
-  | "pastel-gradient";
+  | "pastel-gradient"
+  | "mottled-teal"
+  | "textured-purple"
+  | "coral-polka"
+  | "blue-hearts";
 
 export interface FrameDefinition {
   id: PhotoFrameId;
