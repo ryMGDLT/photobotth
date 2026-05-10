@@ -175,7 +175,12 @@ export function CameraStage({
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isNowFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isNowFullscreen);
+      // Close controls sheet when exiting fullscreen
+      if (!isNowFullscreen) {
+        setSheetOpen(false);
+      }
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -448,14 +453,14 @@ export function CameraStage({
         </div>
 
         {sheetOpen ? (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-50 fullscreen-controls">
             <button
               type="button"
               className="absolute inset-0 bg-black/40"
               onClick={() => setSheetOpen(false)}
               aria-label="Close controls"
             />
-            <div className="absolute bottom-0 left-0 right-0 rounded-t-3xl border border-[#c9a67c] bg-[#fffaf0] p-4 shadow-2xl">
+            <div className="absolute bottom-4 left-4 right-4 mx-auto max-w-2xl rounded-2xl border border-[#c9a67c] bg-[#fffaf0] p-3 shadow-2xl">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <button
@@ -561,7 +566,7 @@ export function CameraStage({
                       />
                     </div>
                   </div>
-                  <div className="max-h-[40vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+                  <div className="max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
                     {filteredFilters.map((filter) => (
                       <button
                         key={filter.id}
@@ -610,7 +615,7 @@ export function CameraStage({
                       />
                     </div>
                   </div>
-                  <div className="max-h-[40vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+                  <div className="max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
                     {filteredEffects.map((effect) => (
                       <button
                         key={effect.id}
