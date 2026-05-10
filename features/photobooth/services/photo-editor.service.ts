@@ -84,25 +84,62 @@ function drawVignette(
   context.restore();
 }
 
+const POLAROID_FRAME_COLOR = "#fffaf0";
+
 async function renderSinglePhoto(
   sourceImage: string,
   settings: EditorSettings,
 ): Promise<string> {
   const image = await loadImage(sourceImage);
+
+  // Polaroid frame dimensions
+  const framePadding = 24;
+  const bottomPadding = 100; // Larger bottom for watermark
+  const photoWidth = image.naturalWidth;
+  const photoHeight = image.naturalHeight;
+
   const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
+  canvas.width = photoWidth + framePadding * 2;
+  canvas.height = photoHeight + framePadding + bottomPadding;
 
   const context = canvas.getContext("2d");
   if (!context) {
     throw new Error("Canvas rendering is unavailable in this browser.");
   }
 
-  context.filter = buildCanvasFilter(settings);
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  context.filter = "none";
-  drawVignette(context, canvas.width, canvas.height, settings.vignette);
-  drawRetroFinish(context, canvas.width, canvas.height);
+  // Fill with Polaroid frame color
+  context.fillStyle = POLAROID_FRAME_COLOR;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Create temporary canvas for photo with filters
+  const photoCanvas = document.createElement("canvas");
+  photoCanvas.width = photoWidth;
+  photoCanvas.height = photoHeight;
+  const photoCtx = photoCanvas.getContext("2d");
+  if (!photoCtx) throw new Error("Unable to create photo canvas");
+
+  // Apply filters to photo
+  photoCtx.filter = buildCanvasFilter(settings);
+  photoCtx.drawImage(image, 0, 0, photoWidth, photoHeight);
+  photoCtx.filter = "none";
+
+  // Apply vignette to photo
+  drawVignette(photoCtx, photoWidth, photoHeight, settings.vignette);
+
+  // Draw the processed photo onto the main canvas
+  context.drawImage(photoCanvas, framePadding, framePadding, photoWidth, photoHeight);
+
+  // Add subtle shadow effect to photo area
+  context.strokeStyle = "rgba(0, 0, 0, 0.08)";
+  context.lineWidth = 1;
+  context.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
+
+  // Add FLASHFRAME watermark
+  context.fillStyle = "#4a445e";
+  context.font = "600 18px var(--font-geist-sans), sans-serif";
+  context.textAlign = "center";
+  context.letterSpacing = "0.15em";
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 32);
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }

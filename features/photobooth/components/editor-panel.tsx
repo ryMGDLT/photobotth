@@ -84,15 +84,16 @@ export function EditorPanel({
     }
 
     return (
-      <div className="w-auto h-auto">
+      <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
         <Image
           src={activePhoto.renderedImage}
           alt={activePhoto.name ?? "Selected photobooth shot"}
           width={800}
           height={533}
           unoptimized
-          className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
+          className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-sm"
         />
+        <span className="mt-3 text-xs font-semibold tracking-[0.2em] text-[#4a445e]">FLASHFRAME</span>
       </div>
     );
     // Only re-render when photo ID, media type, or layout changes - NOT when settings change

@@ -119,9 +119,9 @@ export function SessionGallery({
                   playsInline
                   className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-[1.2rem]"
                 />
-              ) : previewPhoto.layout === "strip" && previewPhoto.stripImages?.length ? (
+              ) : previewPhoto.layout === "strip" ? (
                 <div className="retro-scrollbar flex flex-col gap-2 max-h-[60vh] overflow-y-auto rounded-[1.2rem] bg-[#2a2435] p-2">
-                  {previewPhoto.stripImages.map((img, idx) => (
+                  {(previewPhoto.stripImages?.length ? previewPhoto.stripImages : [previewPhoto.renderedImage]).map((img, idx) => (
                     <div key={idx} className="w-auto h-auto flex-shrink-0">
                       <Image
                         src={img}
@@ -135,15 +135,16 @@ export function SessionGallery({
                   ))}
                 </div>
               ) : (
-                <div className="w-auto h-auto">
+                <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
                   <Image
                     src={previewPhoto.renderedImage}
                     alt={previewPhoto.name ?? "Photo preview"}
                     width={900}
                     height={600}
                     unoptimized
-                    className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-[1.2rem]"
+                    className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-sm"
                   />
+                  <span className="mt-3 text-xs font-semibold tracking-[0.2em] text-[#4a445e]">FLASHFRAME</span>
                 </div>
               )}
             </div>
