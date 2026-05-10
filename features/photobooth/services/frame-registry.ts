@@ -26,6 +26,35 @@ export interface WatermarkConfig {
 // Custom watermark cache for images
 const watermarkImageCache = new Map<string, HTMLImageElement>();
 
+/**
+ * Calculate uniform watermark position for consistent centering
+ */
+export function calculateWatermarkPosition(
+  canvasWidth: number,
+  canvasHeight: number,
+  bottomPadding: number
+): { x: number; y: number } {
+  const watermarkY = canvasHeight - bottomPadding / 2;
+  const x = canvasWidth / 2; // Always center horizontally
+  const y = watermarkY; // Center on watermark line
+  
+  return { x, y };
+}
+
+/**
+ * Get cached watermark image
+ */
+function getCachedWatermarkImage(imageUrl: string): HTMLImageElement | undefined {
+  return watermarkImageCache.get(imageUrl);
+}
+
+/**
+ * Cache watermark image
+ */
+function cacheWatermarkImage(imageUrl: string, image: HTMLImageElement): void {
+  watermarkImageCache.set(imageUrl, image);
+}
+
 async function loadWatermarkImage(imageUrl: string): Promise<HTMLImageElement> {
   if (watermarkImageCache.has(imageUrl)) {
     return watermarkImageCache.get(imageUrl)!;
@@ -132,22 +161,23 @@ function drawWatermarkSync(
   isStrip: boolean = false
 ): void {
   const watermarkConfig = getCurrentWatermarkConfig();
-  const watermarkY = canvasHeight - bottomPadding / 2;
+  
+  // Calculate uniform watermark position
+  const position = calculateWatermarkPosition(canvasWidth, canvasHeight, bottomPadding);
   
   // Set common properties
   ctx.globalAlpha = watermarkConfig.opacity || 1;
   
   if (watermarkConfig.type === 'image' && watermarkConfig.imageUrl) {
-    // Try to draw image watermark synchronously
-    const cachedImg = watermarkImageCache.get(watermarkConfig.imageUrl);
+    const cachedImg = getCachedWatermarkImage(watermarkConfig.imageUrl);
     if (cachedImg && cachedImg.complete) {
-      // Image is loaded and ready
       const scale = watermarkConfig.scale || 0.3;
       const watermarkWidth = canvasWidth * scale;
       const watermarkHeight = (cachedImg.height / cachedImg.width) * watermarkWidth;
       
-      const x = (canvasWidth - watermarkWidth) / 2;
-      const y = watermarkY - watermarkHeight / 2;
+      // Use calculated position for consistent centering
+      const x = position.x - watermarkWidth / 2;
+      const y = position.y - watermarkHeight / 2;
       
       // Add shadow for better visibility
       ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
@@ -163,11 +193,12 @@ function drawWatermarkSync(
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
     } else {
-      // Image not loaded yet, preload it for next time and fall back to text
+      // Load image asynchronously for future use
       if (!cachedImg) {
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => {
-          watermarkImageCache.set(watermarkConfig.imageUrl!, img);
+          cacheWatermarkImage(watermarkConfig.imageUrl!, img);
         };
         img.src = watermarkConfig.imageUrl;
       }
@@ -196,20 +227,20 @@ function drawTextWatermark(
   const fontSize = config.fontSize || (isStrip
     ? Math.max(72, Math.floor(canvasWidth * 0.18))
     : Math.max(96, Math.floor(canvasWidth * 0.22)));
-  
+
   ctx.fillStyle = color;
   ctx.font = `900 ${fontSize}px var(--font-geist-sans), sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  
-  // Add shadow for better visibility
+
   ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
   ctx.shadowBlur = 4;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
   
-  const watermarkY = canvasHeight - bottomPadding / 2;
-  ctx.fillText(config.content || 'FLASHFRAME', canvasWidth / 2, watermarkY);
+  // Use unified positioning for consistent centering
+  const position = calculateWatermarkPosition(canvasWidth, canvasHeight, bottomPadding);
+  ctx.fillText(config.content || 'FLASHFRAME', position.x, position.y);
   
   // Reset shadow
   ctx.shadowColor = "transparent";

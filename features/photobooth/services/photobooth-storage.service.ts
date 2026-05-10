@@ -24,7 +24,14 @@ import {
   getDefaultEditorSettings,
   getStripSources,
   renderPhotoDataUrl,
+  renderHighQualityPhoto,
 } from "@/features/photobooth/services/photo-editor.service";
+import { 
+  getCurrentExportConfig, 
+  applyExportPreset,
+  estimateFileSize,
+  estimateProcessingTime 
+} from "@/features/photobooth/services/export-config";
 
 const DATABASE_NAME = "flashframe-photobooth";
 const DATABASE_VERSION = 1;
@@ -279,8 +286,30 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
   if (typeof window === "undefined") return;
 
   const isVideo = photo.mediaType === "video" && photo.renderedVideo;
-  const sourceUrl = isVideo ? photo.renderedVideo! : photo.renderedImage;
-  const extension = isVideo ? "webm" : "jpg";
+  const exportConfig = getCurrentExportConfig();
+  
+  // Determine file extension based on export configuration
+  const extension = isVideo ? "webm" : exportConfig.format;
+  
+  // For photos, re-render with current export configuration
+  let sourceUrl: string;
+  if (!isVideo) {
+    try {
+      // Use high-quality export with current configuration
+      sourceUrl = await renderHighQualityPhoto({
+        sourceImage: photo.sourceImage,
+        settings: photo.settings,
+        layout: photo.layout,
+        stripSources: photo.layout === "strip" ? getStripSources(photo.id, []) : undefined,
+        frame: photo.settings.frame,
+      });
+    } catch (error) {
+      console.warn("High-quality export failed, falling back to cached image:", error);
+      sourceUrl = photo.renderedImage;
+    }
+  } else {
+    sourceUrl = photo.renderedVideo!;
+  }
 
   // Sanitize filename: prevent path traversal, remove special chars, normalize
   const rawName = photo.name || `flashframe-${photo.mediaType}-${photo.id.slice(-6)}`;
@@ -297,9 +326,14 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
     // Limit length to prevent issues
     .slice(0, 100);
 
+  // Add quality indicator to filename for non-default configs
+  const qualitySuffix = exportConfig.resolution !== '4k' || exportConfig.format !== 'png' 
+    ? `-${exportConfig.resolution}-${exportConfig.format}` 
+    : '';
+    
   const fileName = baseName.endsWith(`.${extension}`)
-    ? baseName
-    : `${baseName || "flashframe-photo"}.${extension}`;
+    ? baseName.replace(`.${extension}`, `${qualitySuffix}.${extension}`)
+    : `${baseName || "flashframe-photo"}${qualitySuffix}.${extension}`;
 
   try {
     let downloadUrl = sourceUrl;
@@ -330,4 +364,46 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
     console.error("FlashFrame: Download failed", error);
     throw new Error("Unable to prepare the file for download.");
   }
+}
+
+/**
+ * Download photo with specific export preset
+ */
+export async function downloadPhotoWithPreset(
+  photo: PhotoRecord, 
+  presetName: string
+): Promise<void> {
+  // Apply the preset temporarily
+  const originalConfig = getCurrentExportConfig();
+  
+  try {
+    applyExportPreset(presetName);
+    await downloadPhoto(photo);
+  } finally {
+    // Restore original configuration
+    const { setExportConfig } = await import("./export-config");
+    setExportConfig(originalConfig);
+  }
+}
+
+/**
+ * Get export information for a photo (file size, processing time, etc.)
+ */
+export function getPhotoExportInfo(photo: PhotoRecord): {
+  estimatedFileSize: string;
+  estimatedProcessingTime: string;
+  currentConfig: import("./export-config").ExportQualityConfig;
+} {
+  // Create a temporary image to get dimensions
+  const img = new Image();
+  img.src = photo.sourceImage;
+  
+  const width = img.naturalWidth || 1920; // Fallback dimensions
+  const height = img.naturalHeight || 1080;
+  
+  return {
+    estimatedFileSize: estimateFileSize(width, height, getCurrentExportConfig()),
+    estimatedProcessingTime: `${estimateProcessingTime(width, height, getCurrentExportConfig())} seconds`,
+    currentConfig: getCurrentExportConfig()
+  };
 }

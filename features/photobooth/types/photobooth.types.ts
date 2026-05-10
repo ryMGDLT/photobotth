@@ -16,6 +16,32 @@ export type PhotoStylePreset =
 
 export type PhotoLayout = "single" | "strip";
 
+// Export quality types
+export type ExportResolution = 'original' | '4k' | '8k' | 'custom';
+export type ExportFormat = 'png' | 'jpeg';
+export type ScalingQuality = 'high' | 'medium' | 'low';
+
+export interface ExportQualityConfig {
+  resolution: ExportResolution;
+  format: ExportFormat;
+  quality: number; // 0.1-1.0 for JPEG fallback
+  enableUpscaling: boolean;
+  enableHighDPI: boolean;
+  customWidth?: number;
+  customHeight?: number;
+  scalingQuality: ScalingQuality;
+}
+
+export interface ExportPreset {
+  name: string;
+  description: string;
+  config: ExportQualityConfig;
+  estimatedProcessingTime: string;
+  estimatedFileSize: string;
+}
+
+export type ExportPresetName = 'print-ready' | 'maximum-quality' | 'web-ready' | 'balanced' | 'preview';
+
 export type CameraPermissionState =
   | "idle"
   | "requesting"
