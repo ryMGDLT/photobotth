@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Download, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
+import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,40 +64,47 @@ export function EditorPanel({
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
-            <div className="relative overflow-hidden rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-4">
-              {isVideo && activePhoto.renderedVideo ? (
-                <video
-                  src={activePhoto.renderedVideo}
-                  poster={activePhoto.renderedImage}
-                  controls
-                  playsInline
-                  className="aspect-[3/2] w-full object-cover rounded-[1.2rem]"
-                />
-              ) : layout === "strip" ? (
-                <div className="flex flex-col gap-2 overflow-y-auto rounded-[1.2rem] bg-[#2a2435] p-3">
-                  {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
-                    <div key={idx} className="relative aspect-[3/2] w-full overflow-hidden rounded-lg">
+            <div className="relative rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-6">
+              {/* Photo preview - container sizes to content for full frame visibility */}
+              <div className="flex items-center justify-center py-6 px-4">
+                <div className="retro-frame w-fit h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
+                  {isVideo && activePhoto.renderedVideo ? (
+                    <video
+                      src={activePhoto.renderedVideo}
+                      poster={activePhoto.renderedImage}
+                      controls
+                      playsInline
+                      className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
+                    />
+                  ) : layout === "strip" ? (
+                    <div className="flex flex-col gap-2 rounded-[0.8rem] bg-[#2a2435] p-2">
+                      {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
+                        <div key={idx} className="w-auto h-auto">
+                          <Image
+                            src={img}
+                            alt={`Strip photo ${idx + 1}`}
+                            width={600}
+                            height={400}
+                            unoptimized
+                            className="w-auto h-auto max-w-full object-contain rounded-md"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-auto h-auto">
                       <Image
-                        src={img}
-                        alt={`Strip photo ${idx + 1}`}
-                        fill
+                        src={activePhoto.renderedImage}
+                        alt={activePhoto.name ?? "Selected photobooth shot"}
+                        width={800}
+                        height={533}
                         unoptimized
-                        className="object-cover"
+                        className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-[0.8rem]"
                       />
                     </div>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1.2rem]">
-                  <Image
-                    src={activePhoto.renderedImage}
-                    alt={activePhoto.name ?? "Selected photobooth shot"}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                </div>
-              )}
+              </div>
 
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 px-3">
                 <button
@@ -115,7 +122,7 @@ export function EditorPanel({
                   onClick={() => onStatusChange("draft")}
                   disabled={busy}
                 >
-                  <span className="size-4" />
+                  <FileMinus className="size-4" />
                   Draft
                 </button>
                 <button

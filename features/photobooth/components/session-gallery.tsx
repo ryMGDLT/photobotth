@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Copy, Download, Heart, Pencil, Trash2 } from "lucide-react";
 
@@ -12,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   PhotoRecord,
@@ -41,6 +43,7 @@ export function SessionGallery({
   onDownload,
   onStatusChange,
 }: SessionGalleryProps) {
+  const [previewPhoto, setPreviewPhoto] = useState<PhotoRecord | null>(null);
   const savedPhotos = photos.filter((photo) => photo.status === "saved");
   const draftPhotos = photos.filter((photo) => photo.status === "draft");
 
@@ -82,6 +85,7 @@ export function SessionGallery({
               onDelete={onDelete}
               onDownload={onDownload}
               onStatusChange={onStatusChange}
+              onPreview={setPreviewPhoto}
             />
             <GalleryColumn
               title="Drafts"
@@ -94,10 +98,107 @@ export function SessionGallery({
               onDelete={onDelete}
               onDownload={onDownload}
               onStatusChange={onStatusChange}
+              onPreview={setPreviewPhoto}
             />
           </div>
         )}
       </CardContent>
+
+      {/* Photo Preview Modal */}
+      <Dialog open={!!previewPhoto} onClose={() => setPreviewPhoto(null)}>
+        {previewPhoto && (
+          <div className="flex flex-col gap-4">
+            <DialogTitle>{previewPhoto.name ?? "Photo Preview"}</DialogTitle>
+            {/* Container sizes to content for full frame visibility */}
+            <div className="retro-frame w-fit h-fit mx-auto max-w-full rounded-[1.6rem] bg-[#fff8ee] p-3">
+              {previewPhoto.mediaType === "video" && previewPhoto.renderedVideo ? (
+                <video
+                  src={previewPhoto.renderedVideo}
+                  poster={previewPhoto.renderedImage}
+                  controls
+                  playsInline
+                  className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-[1.2rem]"
+                />
+              ) : previewPhoto.layout === "strip" && previewPhoto.stripImages?.length ? (
+                <div className="flex flex-col gap-2 rounded-[1.2rem] bg-[#2a2435] p-2">
+                  {previewPhoto.stripImages.map((img, idx) => (
+                    <div key={idx} className="w-auto h-auto">
+                      <Image
+                        src={img}
+                        alt={`Strip photo ${idx + 1}`}
+                        width={600}
+                        height={400}
+                        unoptimized
+                        className="w-auto h-auto max-w-full object-contain rounded-md"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-auto h-auto">
+                  <Image
+                    src={previewPhoto.renderedImage}
+                    alt={previewPhoto.name ?? "Photo preview"}
+                    width={900}
+                    height={600}
+                    unoptimized
+                    className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-[1.2rem]"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() => {
+                  onSelect(previewPhoto.id);
+                  setPreviewPhoto(null);
+                }}
+              >
+                <Pencil className="mr-2 size-4" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() => onDownload(previewPhoto.id)}
+                disabled={busy}
+              >
+                <Download className="mr-2 size-4" />
+                Download
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() => onDuplicate(previewPhoto.id)}
+                disabled={busy}
+              >
+                <Copy className="mr-2 size-4" />
+                Copy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() =>
+                  onStatusChange(
+                    previewPhoto.id,
+                    previewPhoto.status === "saved" ? "draft" : "saved"
+                  )
+                }
+                disabled={busy}
+              >
+                <Heart className="mr-2 size-4" />
+                {previewPhoto.status === "saved" ? "Unsave" : "Save"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </Card>
   );
 }
@@ -106,6 +207,7 @@ interface GalleryColumnProps extends SessionGalleryProps {
   title: string;
   emptyMessage: string;
   photos: PhotoRecord[];
+  onPreview: (photo: PhotoRecord) => void;
 }
 
 function GalleryColumn({
@@ -119,6 +221,7 @@ function GalleryColumn({
   onDelete,
   onDownload,
   onStatusChange,
+  onPreview,
 }: GalleryColumnProps) {
   return (
     <div className="retro-frame rounded-[1.6rem] p-4">
@@ -150,8 +253,8 @@ function GalleryColumn({
               >
                 <button
                   type="button"
-                  className="retro-frame block w-full overflow-hidden rounded-[1.2rem]"
-                  onClick={() => onSelect(photo.id)}
+                  className="retro-frame group block w-full cursor-pointer rounded-[1.2rem] transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg p-2"
+                  onClick={() => onPreview(photo)}
                 >
                   {photo.mediaType === "video" && photo.renderedVideo ? (
                     <video
@@ -159,16 +262,16 @@ function GalleryColumn({
                       poster={photo.renderedImage}
                       muted
                       playsInline
-                      className="aspect-[3/2] w-full object-cover"
+                      className="w-full h-auto object-contain rounded-[0.8rem]"
                     />
                   ) : (
                     <Image
                       src={photo.renderedImage}
                       alt={photo.name ?? "Saved photobooth capture"}
                       width={800}
-                      height={1000}
+                      height={533}
                       unoptimized
-                      className="aspect-[3/2] w-full object-cover"
+                      className="w-full h-auto object-contain rounded-[0.8rem]"
                     />
                   )}
                 </button>

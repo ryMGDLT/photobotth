@@ -27,7 +27,7 @@ export function useFaceDetection({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const faceMeshRef = useRef<ReturnType<typeof import("@mediapipe/face_mesh").FaceMesh.prototype.constructor> | null>(null);
+  const faceMeshRef = useRef<any>(null);
   const requestRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
 

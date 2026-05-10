@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,24 @@ export function PhotoboothWizard({
     },
     onError: (msg) => setError(msg),
   });
+
+  // Track previous step to detect transition from editor -> camera
+  const prevStepRef = useRef<WizardStep>(step);
+
+  useEffect(() => {
+    const prevStep = prevStepRef.current;
+    prevStepRef.current = step;
+
+    // Only restart camera when transitioning from editor to camera
+    if (prevStep === "editor" && step === "camera" && permissionState === "granted") {
+      // Small delay to ensure DOM is ready
+      const timeout = setTimeout(() => {
+        void handleStartCamera();
+      }, 150);
+      return () => clearTimeout(timeout);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, permissionState]);
 
   const busy = galleryBusy || cameraBusy || hydrating;
   const errorMessage = galleryError;

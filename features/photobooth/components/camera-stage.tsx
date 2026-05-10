@@ -190,7 +190,8 @@ export function CameraStage({
         <div className="flex justify-center">
           <div
             ref={cameraContainerRef}
-            className="retro-frame relative mx-auto w-full max-w-[860px] overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#7a4328,#db9f5d_22%,#f7ebcf_48%,#d6b48a_72%,#7c4529)] p-3 sm:p-5"
+            className={`retro-frame relative mx-auto w-full max-w-[860px] overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#7a4328,#db9f5d_22%,#f7ebcf_48%,#d6b48a_72%,#7c4529)] p-3 sm:p-5 ${isFullscreen ? 'fullscreen-camera' : ''}`}
+            data-fullscreen={isFullscreen}
           >
             <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1.8rem] bg-black/5">
               <video
@@ -331,7 +332,7 @@ export function CameraStage({
               ) : null}
 
               {cameraReady ? (
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-center gap-3">
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-3 px-2 z-20 fullscreen-controls">
                   <button
                     type="button"
                     onClick={onToggleCountdown}

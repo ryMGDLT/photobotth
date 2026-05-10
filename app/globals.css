@@ -235,4 +235,24 @@
     background-image:
       radial-gradient(circle, rgba(255, 210, 167, 0.08) 1px, transparent 1px);
   }
+
+  /* Fullscreen camera styles */
+  .fullscreen-camera {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100vh;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  .fullscreen-camera .fullscreen-controls {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0));
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  }
+
+  /* Ensure fullscreen element fills viewport */
+  :fullscreen .fullscreen-camera,
+  ::backdrop {
+    background: #000;
+  }
 }
