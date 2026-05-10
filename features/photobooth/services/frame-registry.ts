@@ -12,8 +12,118 @@ import {
   type LeafyOptions,
   type BorderPatternOptions,
 } from "@/features/photobooth/services/frame-drawing-utils";
+import { getCurrentWatermarkConfig, autoInitializeWatermark } from "./watermark-config";
 
-function drawWatermark(
+export interface WatermarkConfig {
+  type: 'text' | 'image';
+  content?: string; // For text watermarks
+  imageUrl?: string; // For image watermarks
+  fontSize?: number; // Custom font size override
+  scale?: number; // Scale factor for image watermarks
+  opacity?: number; // Opacity override
+}
+
+// Custom watermark cache for images
+const watermarkImageCache = new Map<string, HTMLImageElement>();
+
+async function loadWatermarkImage(imageUrl: string): Promise<HTMLImageElement> {
+  if (watermarkImageCache.has(imageUrl)) {
+    return watermarkImageCache.get(imageUrl)!;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      watermarkImageCache.set(imageUrl, img);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = imageUrl;
+  });
+}
+
+async function drawWatermark(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  bottomPadding: number,
+  color: string,
+  isStrip: boolean = false,
+  config?: WatermarkConfig
+): Promise<void> {
+  const watermarkConfig: WatermarkConfig = config || {
+    type: 'text',
+    content: 'FLASHFRAME'
+  };
+
+  const watermarkY = canvasHeight - bottomPadding / 2;
+  
+  // Set common properties
+  ctx.globalAlpha = watermarkConfig.opacity || 1;
+  
+  if (watermarkConfig.type === 'image' && watermarkConfig.imageUrl) {
+    // Draw image watermark
+    try {
+      const img = await loadWatermarkImage(watermarkConfig.imageUrl);
+      const scale = watermarkConfig.scale || 0.3; // Default 30% of canvas width
+      const watermarkWidth = canvasWidth * scale;
+      const watermarkHeight = (img.height / img.width) * watermarkWidth;
+      
+      const x = (canvasWidth - watermarkWidth) / 2;
+      const y = watermarkY - watermarkHeight / 2;
+      
+      // Add shadow for better visibility
+      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.drawImage(img, x, y, watermarkWidth, watermarkHeight);
+      
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    } catch (error) {
+      console.warn('Failed to load watermark image, falling back to text:', error);
+      // Fallback to text watermark
+      watermarkConfig.type = 'text';
+      watermarkConfig.content = 'FLASHFRAME';
+      return drawWatermark(ctx, canvasWidth, canvasHeight, bottomPadding, color, isStrip, watermarkConfig);
+    }
+  } else {
+    // Draw text watermark
+    const fontSize = watermarkConfig.fontSize || (isStrip
+      ? Math.max(72, Math.floor(canvasWidth * 0.18))
+      : Math.max(96, Math.floor(canvasWidth * 0.22)));
+    
+    ctx.fillStyle = color;
+    ctx.font = `900 ${fontSize}px var(--font-geist-sans), sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    // Add shadow for better visibility
+    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    ctx.fillText(watermarkConfig.content || 'FLASHFRAME', canvasWidth / 2, watermarkY);
+    
+    // Reset shadow
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+  
+  // Reset global alpha
+  ctx.globalAlpha = 1;
+}
+
+// Enhanced synchronous version with custom watermark support
+function drawWatermarkSync(
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
@@ -21,17 +131,91 @@ function drawWatermark(
   color: string,
   isStrip: boolean = false
 ): void {
-  const fontSize = isStrip
-    ? Math.max(48, Math.floor(canvasWidth * 0.12))
-    : Math.max(64, Math.floor(canvasWidth * 0.15));
+  const watermarkConfig = getCurrentWatermarkConfig();
+  const watermarkY = canvasHeight - bottomPadding / 2;
+  
+  // Set common properties
+  ctx.globalAlpha = watermarkConfig.opacity || 1;
+  
+  if (watermarkConfig.type === 'image' && watermarkConfig.imageUrl) {
+    // Try to draw image watermark synchronously
+    const cachedImg = watermarkImageCache.get(watermarkConfig.imageUrl);
+    if (cachedImg && cachedImg.complete) {
+      // Image is loaded and ready
+      const scale = watermarkConfig.scale || 0.3;
+      const watermarkWidth = canvasWidth * scale;
+      const watermarkHeight = (cachedImg.height / cachedImg.width) * watermarkWidth;
+      
+      const x = (canvasWidth - watermarkWidth) / 2;
+      const y = watermarkY - watermarkHeight / 2;
+      
+      // Add shadow for better visibility
+      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.drawImage(cachedImg, x, y, watermarkWidth, watermarkHeight);
+      
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    } else {
+      // Image not loaded yet, preload it for next time and fall back to text
+      if (!cachedImg) {
+        const img = new Image();
+        img.onload = () => {
+          watermarkImageCache.set(watermarkConfig.imageUrl!, img);
+        };
+        img.src = watermarkConfig.imageUrl;
+      }
+      
+      // Fallback to text watermark
+      drawTextWatermark(ctx, canvasWidth, canvasHeight, bottomPadding, color, isStrip, watermarkConfig);
+    }
+  } else {
+    // Draw text watermark
+    drawTextWatermark(ctx, canvasWidth, canvasHeight, bottomPadding, color, isStrip, watermarkConfig);
+  }
+  
+  // Reset global alpha
+  ctx.globalAlpha = 1;
+}
+
+function drawTextWatermark(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  bottomPadding: number,
+  color: string,
+  isStrip: boolean,
+  config: WatermarkConfig
+): void {
+  const fontSize = config.fontSize || (isStrip
+    ? Math.max(72, Math.floor(canvasWidth * 0.18))
+    : Math.max(96, Math.floor(canvasWidth * 0.22)));
   
   ctx.fillStyle = color;
   ctx.font = `900 ${fontSize}px var(--font-geist-sans), sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
+  // Add shadow for better visibility
+  ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  
   const watermarkY = canvasHeight - bottomPadding / 2;
-  ctx.fillText("FLASHFRAME", canvasWidth / 2, watermarkY);
+  ctx.fillText(config.content || 'FLASHFRAME', canvasWidth / 2, watermarkY);
+  
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 function drawClassicCream(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -48,7 +232,7 @@ function drawClassicCream(ctx: CanvasRenderingContext2D, width: number, height: 
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#4a445e");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#4a445e");
 }
 
 function drawDustyPink(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -65,7 +249,7 @@ function drawDustyPink(ctx: CanvasRenderingContext2D, width: number, height: num
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawTeal(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -82,7 +266,7 @@ function drawTeal(ctx: CanvasRenderingContext2D, width: number, height: number):
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawAmber(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -99,7 +283,7 @@ function drawAmber(ctx: CanvasRenderingContext2D, width: number, height: number)
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawLavender(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -116,7 +300,7 @@ function drawLavender(ctx: CanvasRenderingContext2D, width: number, height: numb
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawDiagonalStripes(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -153,7 +337,7 @@ function drawDiagonalStripes(ctx: CanvasRenderingContext2D, width: number, heigh
   
   ctx.restore();
   
-  drawWatermark(ctx, width, height, bottomPadding, "#4a445e");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#4a445e");
 }
 
 function drawDots(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -199,7 +383,7 @@ function drawDots(ctx: CanvasRenderingContext2D, width: number, height: number):
     ctx.fill();
   }
   
-  drawWatermark(ctx, width, height, bottomPadding, "#4a445e");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#4a445e");
 }
 
 function drawHearts(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -241,7 +425,7 @@ function drawHearts(ctx: CanvasRenderingContext2D, width: number, height: number
     drawHeart(x, heartY, heartSize);
   }
   
-  drawWatermark(ctx, width, height, bottomPadding, "#4a445e");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#4a445e");
 }
 
 function drawPastelGradient(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -264,7 +448,7 @@ function drawPastelGradient(ctx: CanvasRenderingContext2D, width: number, height
   ctx.lineWidth = 1;
   ctx.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
   
-  drawWatermark(ctx, width, height, bottomPadding, "#4a445e");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#4a445e");
 }
 
 // Strip-specific frame drawing functions
@@ -275,7 +459,7 @@ function drawClassicCreamStrip(ctx: CanvasRenderingContext2D, width: number, hei
   ctx.fillStyle = "#fffaf0";
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
 function drawDustyPinkStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -285,7 +469,7 @@ function drawDustyPinkStrip(ctx: CanvasRenderingContext2D, width: number, height
   ctx.fillStyle = "#e8a0b0";
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawTealStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -295,7 +479,7 @@ function drawTealStrip(ctx: CanvasRenderingContext2D, width: number, height: num
   ctx.fillStyle = "#5cb8b2";
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawAmberStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -305,7 +489,7 @@ function drawAmberStrip(ctx: CanvasRenderingContext2D, width: number, height: nu
   ctx.fillStyle = "#f5a623";
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawLavenderStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -315,7 +499,7 @@ function drawLavenderStrip(ctx: CanvasRenderingContext2D, width: number, height:
   ctx.fillStyle = "#b39ddb";
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawDiagonalStripesStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -345,7 +529,7 @@ function drawDiagonalStripesStrip(ctx: CanvasRenderingContext2D, width: number, 
   
   ctx.restore();
   
-  drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
 function drawDotsStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -384,7 +568,7 @@ function drawDotsStrip(ctx: CanvasRenderingContext2D, width: number, height: num
     ctx.fill();
   }
   
-  drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
 function drawHeartsStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -419,7 +603,7 @@ function drawHeartsStrip(ctx: CanvasRenderingContext2D, width: number, height: n
     drawHeart(x, heartY, heartSize);
   }
   
-  drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
 function drawPastelGradientStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -435,7 +619,7 @@ function drawPastelGradientStrip(ctx: CanvasRenderingContext2D, width: number, h
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
   
-  drawWatermark(ctx, width, height, footerHeight, "#4a445e", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#4a445e", true);
 }
 
 // Complex Frame Implementations
@@ -471,7 +655,7 @@ function drawMottledTeal(ctx: CanvasRenderingContext2D, width: number, height: n
     opacity: 0.9,
   });
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -505,7 +689,7 @@ function drawTexturedPurple(ctx: CanvasRenderingContext2D, width: number, height
     opacity: 0.85,
   });
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawCoralPolka(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -552,7 +736,7 @@ function drawCoralPolka(ctx: CanvasRenderingContext2D, width: number, height: nu
     density: 4,
   });
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 function drawBlueHearts(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -591,7 +775,7 @@ function drawBlueHearts(ctx: CanvasRenderingContext2D, width: number, height: nu
     opacity: 0.8,
   });
   
-  drawWatermark(ctx, width, height, bottomPadding, "#fffaf0");
+  drawWatermarkSync(ctx, width, height, bottomPadding, "#fffaf0");
 }
 
 // Strip versions of complex frames
@@ -618,7 +802,7 @@ function drawMottledTealStrip(ctx: CanvasRenderingContext2D, width: number, heig
     opacity: 0.9,
   });
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawTexturedPurpleStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -644,7 +828,7 @@ function drawTexturedPurpleStrip(ctx: CanvasRenderingContext2D, width: number, h
     opacity: 0.85,
   });
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawCoralPolkaStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -674,7 +858,7 @@ function drawCoralPolkaStrip(ctx: CanvasRenderingContext2D, width: number, heigh
     opacity: 0.9,
   });
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 function drawBlueHeartsStrip(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -705,7 +889,7 @@ function drawBlueHeartsStrip(ctx: CanvasRenderingContext2D, width: number, heigh
     opacity: 0.8,
   });
   
-  drawWatermark(ctx, width, height, footerHeight, "#fffaf0", true);
+  drawWatermarkSync(ctx, width, height, footerHeight, "#fffaf0", true);
 }
 
 export const FRAME_REGISTRY: Record<PhotoFrameId, FrameDefinition> = {
@@ -879,12 +1063,11 @@ export function drawFrame(
 ): void {
   const registry = isStrip ? STRIP_FRAME_REGISTRY : FRAME_REGISTRY;
   const frame = registry[frameId];
+  
   if (!frame) {
-    // Fallback to classic cream if frame not found
-    const fallbackFrame = registry["classic-cream"];
-    fallbackFrame.draw(ctx, width, height);
-    return;
+    throw new Error(`Frame not found: ${frameId}`);
   }
+  
   frame.draw(ctx, width, height);
 }
 
@@ -895,3 +1078,6 @@ export function getAllFrames(): FrameDefinition[] {
 export function getDefaultFrame(): PhotoFrameId {
   return "classic-cream";
 }
+
+// Auto-initialize custom watermark on module load
+autoInitializeWatermark();
