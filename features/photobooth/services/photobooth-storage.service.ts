@@ -191,6 +191,7 @@ export async function updatePhotoEdits(
     layout: input.layout,
     stripSources:
       input.layout === "strip" ? getStripSources(targetPhoto.id, input.photos) : undefined,
+    frame: input.frame ?? input.settings.frame,
   });
 
   const updatedPhotos = input.photos.map((photo) =>

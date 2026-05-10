@@ -1,6 +1,17 @@
 export type PhotoStatus = "draft" | "saved";
 export type MediaType = "photo" | "video";
 
+export type PhotoFrameId =
+  | "classic-cream"
+  | "dusty-pink"
+  | "teal"
+  | "amber"
+  | "lavender"
+  | "diagonal-stripes"
+  | "dots"
+  | "hearts"
+  | "pastel-gradient";
+
 export type PhotoStylePreset =
   | "original"
   | "classic"
@@ -129,6 +140,7 @@ export interface EditorSettings {
   contrast: number;
   saturation: number;
   vignette: number;
+  frame?: PhotoFrameId;
 }
 
 export interface PhotoRecord {
@@ -182,6 +194,7 @@ export interface UpdatePhotoEditsInput {
   photoId: string;
   settings: EditorSettings;
   layout: PhotoLayout;
+  frame?: PhotoFrameId;
 }
 
 export interface ChangePhotoStatusInput {

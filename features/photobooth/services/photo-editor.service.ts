@@ -2,8 +2,10 @@ import type {
   EditorSettings,
   PhotoLayout,
   PhotoRecord,
+  PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
 import { createEditorSettings } from "@/features/photobooth/utils/photobooth-presets";
+import { drawFrame, getDefaultFrame } from "@/features/photobooth/services/frame-registry";
 
 const STRIP_FRAME_COLOR = "#fffaf0"; // Polaroid cream color
 
@@ -89,8 +91,10 @@ const POLAROID_FRAME_COLOR = "#fffaf0";
 async function renderSinglePhoto(
   sourceImage: string,
   settings: EditorSettings,
+  frameId?: PhotoFrameId,
 ): Promise<string> {
   const image = await loadImage(sourceImage);
+  const frame = frameId ?? getDefaultFrame();
 
   // Polaroid frame dimensions
   const framePadding = 24;
@@ -107,9 +111,8 @@ async function renderSinglePhoto(
     throw new Error("Canvas rendering is unavailable in this browser.");
   }
 
-  // Fill with Polaroid frame color
-  context.fillStyle = POLAROID_FRAME_COLOR;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  // Draw frame using the frame registry
+  drawFrame(context, canvas.width, canvas.height, frame);
 
   // Create temporary canvas for photo with filters
   const photoCanvas = document.createElement("canvas");
@@ -134,21 +137,16 @@ async function renderSinglePhoto(
   context.lineWidth = 1;
   context.strokeRect(framePadding, framePadding, photoWidth, photoHeight);
 
-  // Add FLASHFRAME watermark - proportional to image width
-  const fontSize = Math.max(54, Math.floor(canvas.width * 0.13)); // 13% of width, min 54px
-  context.fillStyle = "#4a445e";
-  context.font = `700 ${fontSize}px var(--font-geist-sans), sans-serif`;
-  context.textAlign = "center";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - Math.floor(bottomPadding / 2.5));
-
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
 async function renderStripPhoto(
   sourceImages: string[],
   settings: EditorSettings,
+  frameId?: PhotoFrameId,
 ): Promise<string> {
   const images = await Promise.all(sourceImages.map((source) => loadImage(source)));
+  const frame = frameId ?? getDefaultFrame();
   const framePadding = 22;
   const innerWidth = 340;
   const slotHeight = 220;
@@ -164,8 +162,8 @@ async function renderStripPhoto(
     throw new Error("Canvas rendering is unavailable in this browser.");
   }
 
-  context.fillStyle = STRIP_FRAME_COLOR;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  // Draw frame using the frame registry (strip version)
+  drawFrame(context, canvas.width, canvas.height, frame, true);
 
   // Render each image with filters and vignette applied individually
   images.forEach((image, index) => {
@@ -194,13 +192,6 @@ async function renderStripPhoto(
     context.drawImage(tempCanvas, x, y, innerWidth, slotHeight);
   });
 
-  // Add FLASHFRAME watermark - proportional to image width
-  const fontSize = Math.max(32, Math.floor(canvas.width * 0.10)); // 10% of width, min 32px
-  context.fillStyle = "#4a445e";
-  context.font = `700 ${fontSize}px var(--font-geist-sans), sans-serif`;
-  context.textAlign = "center";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - Math.floor(footerHeight / 2.5));
-
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
@@ -209,20 +200,24 @@ export async function renderPhotoDataUrl(options: {
   settings: EditorSettings;
   layout: PhotoLayout;
   stripSources?: string[];
+  frame?: PhotoFrameId;
 }): Promise<string> {
   if (options.layout === "strip") {
     const stripSources =
       options.stripSources && options.stripSources.length > 0
         ? options.stripSources.slice(0, 3)
         : [options.sourceImage];
-    return renderStripPhoto(stripSources, options.settings);
+    return renderStripPhoto(stripSources, options.settings, options.frame);
   }
 
-  return renderSinglePhoto(options.sourceImage, options.settings);
+  return renderSinglePhoto(options.sourceImage, options.settings, options.frame);
 }
 
 export function getDefaultEditorSettings(): EditorSettings {
-  return createEditorSettings("original");
+  return {
+    ...createEditorSettings("original"),
+    frame: getDefaultFrame(),
+  };
 }
 
 export function getStripSources(

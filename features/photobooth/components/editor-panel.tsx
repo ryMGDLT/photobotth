@@ -12,7 +12,9 @@ import type {
   PhotoRecord,
   PhotoStylePreset,
   PhotoStatus,
+  PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
+import { FramePicker } from "@/features/photobooth/components/frame-picker";
 
 const presetLabels: Record<PhotoStylePreset, string> = {
   original: "Original",
@@ -30,7 +32,8 @@ interface EditorPanelProps {
   busy: boolean;
   onPresetChange: (preset: PhotoStylePreset) => void;
   onLayoutChange: (layout: PhotoLayout) => void;
-  onSliderChange: (field: keyof Omit<EditorSettings, "preset">, value: number) => void;
+  onSliderChange: (field: keyof Omit<EditorSettings, "preset" | "frame">, value: number) => void;
+  onFrameChange: (frame: PhotoFrameId) => void;
   onStatusChange: (status: PhotoStatus) => void;
   onDownload: () => void;
 }
@@ -43,6 +46,7 @@ export function EditorPanel({
   onPresetChange,
   onLayoutChange,
   onSliderChange,
+  onFrameChange,
   onStatusChange,
   onDownload,
 }: EditorPanelProps) {
@@ -216,6 +220,18 @@ export function EditorPanel({
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/70 p-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
+                      <LayoutPanelTop className="size-4" />
+                      Frame
+                    </div>
+                    <FramePicker
+                      selectedFrame={settings.frame ?? "classic-cream"}
+                      onFrameChange={onFrameChange}
+                      disabled={busy}
+                    />
                   </div>
 
                   <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/70 p-4">

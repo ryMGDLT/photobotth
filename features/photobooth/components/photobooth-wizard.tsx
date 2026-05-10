@@ -18,6 +18,7 @@ import type {
   PhotoLayout,
   PhotoStatus,
   PhotoStylePreset,
+  PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
 import { getCameraEffectCss, getCameraFilterCss } from "@/features/photobooth/utils/camera-filters";
 import { createEditorSettings } from "@/features/photobooth/utils/photobooth-presets";
@@ -133,7 +134,7 @@ export function PhotoboothWizard({
   const editDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const pendingEditsRef = useRef<{ settings: EditorSettings; layout: PhotoLayout } | null>(null);
 
-  const applyEdits = useCallback(async (nextSettings: EditorSettings, nextLayout: PhotoLayout) => {
+  const applyEdits = useCallback(async (nextSettings: EditorSettings, nextLayout: PhotoLayout, nextFrame?: PhotoFrameId) => {
     if (!activePhotoId || activePhoto?.mediaType === "video") return;
 
     // Store pending edits
@@ -147,7 +148,7 @@ export function PhotoboothWizard({
     // Debounce the actual update to prevent flickering during slider drag
     editDebounceRef.current = setTimeout(async () => {
       if (pendingEditsRef.current && activePhotoId) {
-        await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout);
+        await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout, nextFrame);
         pendingEditsRef.current = null;
       }
     }, 300);
@@ -238,6 +239,9 @@ export function PhotoboothWizard({
               onLayoutChange={(l: PhotoLayout) => applyEdits(resolvedSettings, l)}
               onSliderChange={(field, value) =>
                 applyEdits({ ...resolvedSettings, [field]: value }, resolvedLayout)
+              }
+              onFrameChange={(frame: PhotoFrameId) =>
+                applyEdits({ ...resolvedSettings, frame }, resolvedLayout, frame)
               }
               onStatusChange={(s: PhotoStatus) => {
                 if (activePhotoId) handleStatusChange(activePhotoId, s);

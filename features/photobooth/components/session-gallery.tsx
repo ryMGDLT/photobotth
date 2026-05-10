@@ -133,7 +133,6 @@ export function SessionGallery({
                       />
                     </div>
                   ))}
-                  <span className="text-center text-sm font-semibold tracking-[0.25em] text-[#4a445e] pt-2">FLASHFRAME</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
@@ -145,7 +144,6 @@ export function SessionGallery({
                     unoptimized
                     className="w-auto h-auto max-w-full max-h-[50vh] object-contain rounded-sm"
                   />
-                  <span className="mt-3 text-sm font-semibold tracking-[0.25em] text-[#4a445e]">FLASHFRAME</span>
                 </div>
               )}
             </div>

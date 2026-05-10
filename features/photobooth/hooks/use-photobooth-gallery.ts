@@ -8,6 +8,7 @@ import type {
   PhotoStylePreset,
   EditorSettings,
   PhotoLayout,
+  PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
 import {
   hydrateSessionGallery,
@@ -118,7 +119,8 @@ export function usePhotoboothGallery() {
   const handleUpdateEdits = async (
     photoId: string,
     settings: EditorSettings,
-    layout: PhotoLayout
+    layout: PhotoLayout,
+    frame?: PhotoFrameId
   ) => {
     setBusy(true);
     try {
@@ -128,6 +130,7 @@ export function usePhotoboothGallery() {
         photoId,
         settings,
         layout,
+        frame,
       });
       setPhotos(next.photos);
     } catch (err) {
