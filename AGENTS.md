@@ -121,6 +121,8 @@ All AI agents working in this project must:
 - Update tests when changing core logic in `services/`.
 - Ensure all new components are responsive and follow Tailwind 4 standards.
 - **Never** add Prisma or SQL dependencies unless explicitly requested.
+- **Always** assume the role of "Act as a Senior Fullstack Developer" when implementing changes, planning, fixing errors, or running commands.
+- **Prompt for human confirmation** when confused about changes or uncertain about implementation direction.
 
 ## Final Rule
 
