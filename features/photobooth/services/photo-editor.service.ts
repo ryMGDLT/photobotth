@@ -209,6 +209,8 @@ async function renderSinglePhoto(
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
     
+    let canvasScale = 1;
+
     if (isPreview) {
       // Simple canvas for preview
       canvas = document.createElement("canvas");
@@ -226,11 +228,11 @@ async function renderSinglePhoto(
       );
       canvas = highDPICanvas.canvas;
       ctx = highDPICanvas.context;
+      canvasScale = highDPICanvas.scale;
       configureCanvasForHighQuality(ctx);
     }
 
     // Draw frame using the frame registry
-    const scale = isPreview ? 1 : (ctx as any).scale || 1;
     drawFrame(ctx, canvas.width, canvas.height, frame, false); // Explicitly single frame
 
     // Create temporary canvas for photo with filters
@@ -249,29 +251,28 @@ async function renderSinglePhoto(
     drawVignette(photoCtx, finalPhotoWidth, finalPhotoHeight, settings.vignette);
 
     // Draw the processed photo onto the main canvas
-    const drawScale = isPreview ? 1 : scale;
     ctx.drawImage(
       photoCanvas, 
-      framePadding * drawScale, 
-      framePadding * drawScale, 
-      finalPhotoWidth * drawScale, 
-      finalPhotoHeight * drawScale
+      framePadding * canvasScale, 
+      framePadding * canvasScale, 
+      finalPhotoWidth * canvasScale, 
+      finalPhotoHeight * canvasScale
     );
 
     // Add subtle shadow effect to photo area
     ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
     ctx.lineWidth = 1;
     ctx.strokeRect(
-      framePadding * drawScale, 
-      framePadding * drawScale, 
-      finalPhotoWidth * drawScale, 
-      finalPhotoHeight * drawScale
+      framePadding * canvasScale, 
+      framePadding * canvasScale, 
+      finalPhotoWidth * canvasScale, 
+      finalPhotoHeight * canvasScale
     );
 
     // Export with configured format and quality
     const result = isPreview 
       ? canvas.toDataURL("image/jpeg", exportConfig.quality)
-      : highDPICanvasToDataURL({ canvas, context: ctx, scale: drawScale, logicalWidth: totalWidth, logicalHeight: totalHeight, actualWidth: canvas.width, actualHeight: canvas.height }, exportConfig.format, exportConfig.quality);
+      : highDPICanvasToDataURL({ canvas, context: ctx, scale: canvasScale, logicalWidth: totalWidth, logicalHeight: totalHeight, actualWidth: canvas.width, actualHeight: canvas.height }, exportConfig.format, exportConfig.quality);
 
     // Cache the result
     cacheManager.setComposite(imageHash, frame, isPreview ? 'preview' : 'high', result);

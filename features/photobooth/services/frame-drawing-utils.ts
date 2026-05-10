@@ -1,3 +1,19 @@
+/**
+ * Seeded pseudo-random number generator (mulberry32).
+ * Produces deterministic values so frame textures render identically
+ * across calls — ensuring cache hits are valid.
+ */
+function seededRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s += 0x6d2b79f5;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export interface TextureOptions {
   baseColor: string;
   textureColor?: string;
@@ -60,11 +76,12 @@ export function drawMottledTexture(
   ctx.globalAlpha = opacity;
   
   const speckleCount = Math.floor(width * height * density / 1000);
+  const rng = seededRng(width * 31 + height);
   
   for (let i = 0; i < speckleCount; i++) {
-    const speckleX = x + Math.random() * width;
-    const speckleY = y + Math.random() * height;
-    const speckleSize = Math.random() * 3 + 1;
+    const speckleX = x + rng() * width;
+    const speckleY = y + rng() * height;
+    const speckleSize = rng() * 3 + 1;
     
     ctx.fillStyle = textureColor;
     ctx.beginPath();
@@ -99,9 +116,10 @@ export function drawGrainTexture(
   const imageData = ctx.createImageData(width, height);
   const data = imageData.data;
   
+  const rng = seededRng(width * 17 + height * 31);
   for (let i = 0; i < data.length; i += 4) {
-    if (Math.random() < density) {
-      const offset = Math.floor(Math.random() * 20 - 10);
+    if (rng() < density) {
+      const offset = Math.floor(rng() * 20 - 10);
       data[i] = Math.min(255, Math.max(0, data[i] + offset));     // Red
       data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + offset)); // Green
       data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + offset)); // Blue
@@ -169,10 +187,11 @@ export function drawTapeElement(
   
   // Add subtle texture to tape
   ctx.globalAlpha = opacity * 0.3;
+  const tapeRng = seededRng(x * 7 + y * 13);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   for (let i = 0; i < 5; i++) {
-    const lineX = x + Math.random() * width;
-    const lineY = y + Math.random() * height;
+    const lineX = x + tapeRng() * width;
+    const lineY = y + tapeRng() * height;
     ctx.fillRect(lineX, lineY, 1, 1);
   }
   
@@ -193,12 +212,13 @@ export function drawLeafyEmbellishment(
   ctx.strokeStyle = color;
   ctx.lineWidth = 1;
   
+  const leafRng = seededRng(x * 11 + y * 23 + size);
   // Draw multiple leaves in a cluster
   for (let i = 0; i < density; i++) {
-    const leafX = x + (Math.random() - 0.5) * size;
-    const leafY = y + (Math.random() - 0.5) * size;
-    const leafSize = size * (0.3 + Math.random() * 0.4);
-    const rotation = Math.random() * Math.PI * 2;
+    const leafX = x + (leafRng() - 0.5) * size;
+    const leafY = y + (leafRng() - 0.5) * size;
+    const leafSize = size * (0.3 + leafRng() * 0.4);
+    const rotation = leafRng() * Math.PI * 2;
     
     ctx.save();
     ctx.translate(leafX, leafY);

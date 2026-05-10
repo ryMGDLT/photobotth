@@ -70,7 +70,7 @@ export function EditorPanel({
 
     if (layout === "strip") {
       return (
-        <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg">
+        <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg max-h-[60vh] overflow-y-auto">
           <Image
             src={activePhoto.renderedImage}
             alt={activePhoto.name ?? "Strip photo"}

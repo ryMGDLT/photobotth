@@ -14,6 +14,7 @@ import { COUNTDOWN_SECONDS } from "@/features/photobooth/utils/photobooth-helper
 import { createCapture } from "@/features/photobooth/services/photobooth-storage.service";
 import { useFaceDetection } from "@/hooks/use-face-detection";
 import type { FaceLandmarks } from "@/hooks/use-face-detection";
+import { delay } from "@/lib/utils";
 
 const MAX_VIDEO_SECONDS = 8;
 const CAPTURE_ASPECT_RATIO = 3 / 2;
@@ -206,8 +207,6 @@ export function useCameraBooth({
       }
     }
   }, [cameraFilter, permissionState, rotation]);
-
-  const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
   async function handleStartCamera() {
     if (!navigator?.mediaDevices?.getUserMedia) {

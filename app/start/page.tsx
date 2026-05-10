@@ -1,4 +1,5 @@
 import { PhotoboothWizard } from "@/features/photobooth/components/photobooth-wizard";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default async function StartPage({
   searchParams,
@@ -13,5 +14,9 @@ export default async function StartPage({
       ? params.step
       : undefined;
 
-  return <PhotoboothWizard initialStep={requestedStep} />;
+  return (
+    <ErrorBoundary>
+      <PhotoboothWizard initialStep={requestedStep} />
+    </ErrorBoundary>
+  );
 }

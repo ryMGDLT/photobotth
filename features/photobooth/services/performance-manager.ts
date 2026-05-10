@@ -253,26 +253,12 @@ export class PerformanceManager {
    * Update memory usage metrics
    */
   private updateMemoryMetrics(): void {
-    if (typeof window === 'undefined' || !(performance as any).memory) {
-      return;
-    }
+    if (typeof window === 'undefined') return;
+    // Chrome-only memory API — use feature detection
+    const perf = performance as Performance & { memory?: { usedJSHeapSize: number } };
+    if (!perf.memory) return;
 
-    const memory = (performance as any).memory;
-    this.metrics.memoryUsage = Math.round(memory.usedJSHeapSize / 1024 / 1024); // MB
-    
-    // Trigger garbage collection if memory is high
-    if (this.metrics.memoryUsage > this.config.maxMemoryUsage * 0.8) {
-      this.requestGarbageCollection();
-    }
-  }
-
-  /**
-   * Request garbage collection if available
-   */
-  private requestGarbageCollection(): void {
-    if (typeof window !== 'undefined' && (window as any).gc) {
-      (window as any).gc();
-    }
+    this.metrics.memoryUsage = Math.round(perf.memory.usedJSHeapSize / 1024 / 1024); // MB
   }
 
   /**
@@ -373,8 +359,6 @@ export function withPerformanceTracking<T>(
     const endTime = performance.now();
     const duration = endTime - startTime;
     
-    console.log(`Performance: ${operationName} took ${duration.toFixed(2)}ms`);
-    
     // Update metrics
     performanceManager.metrics.processingTime = duration;
     
@@ -395,9 +379,11 @@ export function withPerformanceTracking<T>(
 export function getDevicePerformanceLevel(): 'low' | 'medium' | 'high' {
   if (typeof window === 'undefined') return 'medium';
   
-  const memory = (navigator as any).deviceMemory || 4;
+  type NavigatorExtended = Navigator & { deviceMemory?: number; connection?: { effectiveType?: string } };
+  const nav = navigator as NavigatorExtended;
+  const memory = nav.deviceMemory ?? 4;
   const cores = navigator.hardwareConcurrency || 4;
-  const connection = (navigator as any).connection;
+  const connection = nav.connection;
   
   // Calculate performance score
   let score = 0;

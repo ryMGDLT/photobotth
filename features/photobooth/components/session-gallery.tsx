@@ -68,12 +68,12 @@ export function SessionGallery({
 
       <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
         {hydrating ? (
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             <GalleryColumnSkeleton title="Saved" />
             <GalleryColumnSkeleton title="Drafts" />
           </div>
         ) : (
-          <div className="mt-5 grid gap-5 xl:grid-cols-2">
+          <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <GalleryColumn
               title="Saved"
               emptyMessage="Pin a photo from the editor to keep it at the top of this session."

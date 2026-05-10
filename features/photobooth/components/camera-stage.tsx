@@ -343,7 +343,7 @@ export function CameraStage({
                     type="button"
                     onClick={onToggleCountdown}
                     disabled={busy}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border transition ${
                       countdownEnabled
                         ? "retro-marquee border-transparent text-[#fff1d3]"
                         : "border-[#c9a67c] bg-[#fffaf0] text-foreground hover:bg-[#f6e0bb]"
@@ -466,7 +466,7 @@ export function CameraStage({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                    className={`flex min-h-[44px] items-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
                       sheetTab === "mode"
                         ? "retro-marquee border-transparent text-[#fff1d3]"
                         : "border-[#c9a67c] bg-white text-foreground"
@@ -477,7 +477,7 @@ export function CameraStage({
                   </button>
                   <button
                     type="button"
-                    className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                    className={`flex min-h-[44px] items-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
                       sheetTab === "filters"
                         ? "retro-marquee border-transparent text-[#fff1d3]"
                         : "border-[#c9a67c] bg-white text-foreground"
@@ -488,7 +488,7 @@ export function CameraStage({
                   </button>
                   <button
                     type="button"
-                    className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                    className={`flex min-h-[44px] items-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition ${
                       sheetTab === "effects"
                         ? "retro-marquee border-transparent text-[#fff1d3]"
                         : "border-[#c9a67c] bg-white text-foreground"
@@ -567,7 +567,7 @@ export function CameraStage({
                       />
                     </div>
                   </div>
-                  <div className="max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+                  <div className="max-h-[40vh] sm:max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
                     {filteredFilters.map((filter) => (
                       <button
                         key={filter.id}
@@ -616,7 +616,7 @@ export function CameraStage({
                       />
                     </div>
                   </div>
-                  <div className="max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+                  <div className="max-h-[40vh] sm:max-h-[28vh] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
                     {filteredEffects.map((effect) => (
                       <button
                         key={effect.id}

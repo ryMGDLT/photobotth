@@ -338,9 +338,14 @@ export class CacheManager {
     const now = Date.now();
     const cutoff = now - this.config.ttl;
 
-    // This is a simplified implementation
-    // In a real implementation, we'd iterate through each cache and remove expired entries
-    console.log('Clearing expired cache entries');
+    [this.frameCache, this.scaledImageCache, this.compositeCache].forEach(cache => {
+      for (const key of Array.from((cache as any).cache.keys())) {
+        const entry = (cache as any).cache.get(key);
+        if (entry && entry.timestamp < cutoff) {
+          (cache as any).cache.delete(key);
+        }
+      }
+    });
   }
 
   /**

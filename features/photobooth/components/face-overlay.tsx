@@ -30,10 +30,11 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, contai
     };
 
     updateSize();
-    const interval = setInterval(updateSize, 100);
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(containerElement);
 
     return () => {
-      clearInterval(interval);
+      observer.disconnect();
     };
   }, [containerElement]);
 

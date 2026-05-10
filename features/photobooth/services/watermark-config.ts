@@ -73,13 +73,6 @@ export const WATERMARK_PRESETS: Record<string, WatermarkConfig> = {
   // Subtle, minimal watermark
   subtle: SUBTLE_WATERMARK_CONFIG,
   
-  // Custom brand example (replace with your actual logo URL)
-  customBrand: createImageWatermarkConfig(
-    '/brand-logo.png', // Place your logo in public/
-    0.375, // 37.5% of canvas width (increased by 50% from 25%)
-    1 // Full opacity
-  ),
-  
   // Example with a different text
   customText: createTextWatermarkConfig(
     'YOUR BRAND',
@@ -154,9 +147,7 @@ export async function initializeCustomWatermark(imageUrl: string = '/brand-logo.
     // Set as active watermark
     setWatermarkPreset('customBrand');
     
-    console.log('Custom watermark initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize custom watermark:', error);
     // Fall back to default text watermark
     setWatermarkPreset('flashframe');
   }
@@ -171,6 +162,6 @@ export function autoInitializeWatermark(): void {
   
   // Try to load the default brand logo
   initializeCustomWatermark('/brand-logo.png').catch(() => {
-    console.log('Brand logo not found, using default watermark');
+    // Expected when no brand logo is present — fall back to default text watermark
   });
 }
