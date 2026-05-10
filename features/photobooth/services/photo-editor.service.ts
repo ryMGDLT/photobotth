@@ -5,7 +5,7 @@ import type {
 } from "@/features/photobooth/types/photobooth.types";
 import { createEditorSettings } from "@/features/photobooth/utils/photobooth-presets";
 
-const STRIP_FRAME_COLOR = "#fff6eb";
+const STRIP_FRAME_COLOR = "#fffaf0"; // Polaroid cream color
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
@@ -136,10 +136,10 @@ async function renderSinglePhoto(
 
   // Add FLASHFRAME watermark
   context.fillStyle = "#4a445e";
-  context.font = "600 18px var(--font-geist-sans), sans-serif";
+  context.font = "600 24px var(--font-geist-sans), sans-serif";
   context.textAlign = "center";
-  context.letterSpacing = "0.15em";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 32);
+  context.letterSpacing = "0.2em";
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 36);
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }
@@ -198,9 +198,10 @@ async function renderStripPhoto(
   drawRetroFinish(context, canvas.width, canvas.height - footerHeight);
 
   context.fillStyle = "#4a445e";
-  context.font = "600 22px var(--font-geist-sans), sans-serif";
+  context.font = "600 24px var(--font-geist-sans), sans-serif";
   context.textAlign = "center";
-  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 42);
+  context.letterSpacing = "0.2em";
+  context.fillText("FLASHFRAME", canvas.width / 2, canvas.height - 40);
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }

@@ -66,19 +66,15 @@ export function EditorPanel({
 
     if (layout === "strip") {
       return (
-        <div className="flex flex-col gap-2 rounded-[0.8rem] bg-[#2a2435] p-2">
-          {(activePhoto.stripImages?.length ? activePhoto.stripImages : [activePhoto.renderedImage]).map((img, idx) => (
-            <div key={`${activePhoto.id}-strip-${idx}`} className="w-auto h-auto">
-              <Image
-                src={img}
-                alt={`Strip photo ${idx + 1}`}
-                width={600}
-                height={400}
-                unoptimized
-                className="w-auto h-auto max-w-full object-contain rounded-md"
-              />
-            </div>
-          ))}
+        <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg">
+          <Image
+            src={activePhoto.renderedImage}
+            alt={activePhoto.name ?? "Strip photo"}
+            width={600}
+            height={800}
+            unoptimized
+            className="w-auto h-auto max-w-full object-contain rounded-sm"
+          />
         </div>
       );
     }
@@ -93,7 +89,6 @@ export function EditorPanel({
           unoptimized
           className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-sm"
         />
-        <span className="mt-3 text-xs font-semibold tracking-[0.2em] text-[#4a445e]">FLASHFRAME</span>
       </div>
     );
     // Only re-render when photo ID, media type, or layout changes - NOT when settings change

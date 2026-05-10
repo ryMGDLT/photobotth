@@ -198,7 +198,7 @@ export function CameraStage({
             className={`retro-frame relative mx-auto w-full max-w-[860px] overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#7a4328,#db9f5d_22%,#f7ebcf_48%,#d6b48a_72%,#7c4529)] p-3 sm:p-5 ${isFullscreen ? 'fullscreen-camera' : ''}`}
             data-fullscreen={isFullscreen}
           >
-            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1.8rem] bg-black/5">
+            <div className="relative isolate aspect-[3/2] w-full overflow-hidden rounded-[1.8rem] bg-black/5">
               <video
                 ref={videoRef}
                 autoPlay
@@ -217,7 +217,8 @@ export function CameraStage({
                 ref={webglCanvasRef}
                 style={{
                   transform: `rotate(${rotation}deg)`,
-                  transformOrigin: "center center"
+                  transformOrigin: "center center",
+                  filter: "none"
                 }}
                 className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
                   cameraReady && activeFilter === "vhs-pro" ? "opacity-100" : "opacity-0 pointer-events-none"
