@@ -1,5 +1,5 @@
-import { PhotoboothApp } from "@/features/photobooth/components/photobooth-app";
+import { MainMenu } from "@/features/photobooth/components/main-menu";
 
 export default function Home() {
-  return <PhotoboothApp currentPage="welcome" />;
+  return <MainMenu />;
 }

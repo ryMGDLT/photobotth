@@ -1,38 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { FaceLandmarks } from "@/hooks/use-face-detection";
+import { FACE_LANDMARKS } from "@/features/photobooth/utils/face-renderer";
 
 interface FaceOverlayProps {
   landmarks: FaceLandmarks[] | null;
   effect: string;
   videoWidth: number;
   videoHeight: number;
-  videoElement: HTMLVideoElement | null;
+  containerElement?: HTMLElement | null;
+  rotation: number;
 }
 
-// MediaPipe Face Mesh landmark indices for key facial features
-const LANDMARKS = {
-  leftEye: 33,
-  rightEye: 362,
-  nose: 1,
-  mouth: 61,
-  leftEar: 234,
-  rightEar: 454,
-  forehead: 10,
-  chin: 152,
-  leftCheek: 234,
-  rightCheek: 454,
-};
+// MediaPipe Face Mesh landmark indices for key facial features are imported from face-renderer
 
-export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoElement }: FaceOverlayProps) {
+export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, containerElement, rotation }: FaceOverlayProps) {
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    if (!videoElement) return;
+    if (!containerElement) return;
 
     const updateSize = () => {
-      const rect = videoElement.getBoundingClientRect();
+      const rect = containerElement.getBoundingClientRect();
       setDisplaySize({
         width: rect.width,
         height: rect.height,
@@ -40,30 +30,58 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
     };
 
     updateSize();
-    const interval = setInterval(updateSize, 100);
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(containerElement);
 
     return () => {
-      clearInterval(interval);
+      observer.disconnect();
     };
-  }, [videoElement]);
+  }, [containerElement]);
 
   if (!landmarks || landmarks.length === 0 || effect === "none" || displaySize.width === 0) {
     return null;
   }
 
+  const rotated = rotation === 90 || rotation === 270;
+  const sourceWidth = (rotated ? videoHeight : videoWidth) || 1280;
+  const sourceHeight = (rotated ? videoWidth : videoHeight) || 720;
+  const coverScale = Math.max(displaySize.width / sourceWidth, displaySize.height / sourceHeight);
+  const drawnWidth = sourceWidth * coverScale;
+  const drawnHeight = sourceHeight * coverScale;
+  const offsetX = (displaySize.width - drawnWidth) / 2;
+  const offsetY = (displaySize.height - drawnHeight) / 2;
+
   const getPoint = (index: number) => {
     const landmark = landmarks[index];
     if (!landmark) return { x: 0, y: 0 };
+    
+    let x = landmark.x;
+    let y = landmark.y;
+
+    // Apply rotation for SVG overlay
+    if (rotation === 90) {
+      const temp = x;
+      x = 1 - y;
+      y = temp;
+    } else if (rotation === 180) {
+      x = 1 - x;
+      y = 1 - y;
+    } else if (rotation === 270) {
+      const temp = x;
+      x = y;
+      y = 1 - temp;
+    }
+
     return {
-      x: landmark.x * displaySize.width,
-      y: landmark.y * displaySize.height,
+      x: x * drawnWidth + offsetX,
+      y: y * drawnHeight + offsetY,
     };
   };
 
   const renderCatEars = () => {
-    const leftEar = getPoint(LANDMARKS.leftEar);
-    const rightEar = getPoint(LANDMARKS.rightEar);
-    const forehead = getPoint(LANDMARKS.forehead);
+    const leftEar = getPoint(FACE_LANDMARKS.leftEar);
+    const rightEar = getPoint(FACE_LANDMARKS.rightEar);
+    const forehead = getPoint(FACE_LANDMARKS.forehead);
 
     const earSize = displaySize.width * 0.15;
     const earHeight = displaySize.width * 0.2;
@@ -91,9 +109,9 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderDevilHorns = () => {
-    const leftEar = getPoint(LANDMARKS.leftEar);
-    const rightEar = getPoint(LANDMARKS.rightEar);
-    const forehead = getPoint(LANDMARKS.forehead);
+    const leftEar = getPoint(FACE_LANDMARKS.leftEar);
+    const rightEar = getPoint(FACE_LANDMARKS.rightEar);
+    const forehead = getPoint(FACE_LANDMARKS.forehead);
 
     const hornWidth = displaySize.width * 0.08;
     const hornHeight = displaySize.width * 0.2;
@@ -113,7 +131,7 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderAngelHalo = () => {
-    const forehead = getPoint(LANDMARKS.forehead);
+    const forehead = getPoint(FACE_LANDMARKS.forehead);
     const haloRadius = displaySize.width * 0.15;
     const haloThickness = 8;
 
@@ -131,9 +149,9 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderGlasses = () => {
-    const leftEye = getPoint(LANDMARKS.leftEye);
-    const rightEye = getPoint(LANDMARKS.rightEye);
-    const nose = getPoint(LANDMARKS.nose);
+    const leftEye = getPoint(FACE_LANDMARKS.leftEye);
+    const rightEye = getPoint(FACE_LANDMARKS.rightEye);
+    const nose = getPoint(FACE_LANDMARKS.nose);
 
     const eyeDistance = Math.abs(rightEye.x - leftEye.x);
     const lensRadius = eyeDistance * 0.4;
@@ -175,12 +193,12 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderMustache = () => {
-    const nose = getPoint(LANDMARKS.nose);
-    const mouth = getPoint(LANDMARKS.mouth);
-    const chin = getPoint(LANDMARKS.chin);
+    const nose = getPoint(FACE_LANDMARKS.nose);
+    const mouth = getPoint(FACE_LANDMARKS.mouth);
+    const chin = getPoint(FACE_LANDMARKS.chin);
 
-    const mustacheWidth = videoWidth * 0.2;
-    const mustacheHeight = videoWidth * 0.05;
+    const mustacheWidth = displaySize.width * 0.2;
+    const mustacheHeight = displaySize.width * 0.05;
     const mustacheY = nose.y + (mouth.y - nose.y) * 0.6;
 
     return (
@@ -195,8 +213,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderBlush = () => {
-    const leftCheek = getPoint(LANDMARKS.leftCheek);
-    const rightCheek = getPoint(LANDMARKS.rightCheek);
+    const leftCheek = getPoint(FACE_LANDMARKS.leftCheek);
+    const rightCheek = getPoint(FACE_LANDMARKS.rightCheek);
 
     const blushRadius = displaySize.width * 0.08;
 
@@ -221,8 +239,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderTears = () => {
-    const leftEye = getPoint(LANDMARKS.leftEye);
-    const rightEye = getPoint(LANDMARKS.rightEye);
+    const leftEye = getPoint(FACE_LANDMARKS.leftEye);
+    const rightEye = getPoint(FACE_LANDMARKS.rightEye);
 
     const tearRadius = videoWidth * 0.02;
     const tearOffset = videoWidth * 0.03;
@@ -248,8 +266,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderSweat = () => {
-    const leftForehead = getPoint(LANDMARKS.forehead);
-    const rightForehead = getPoint(LANDMARKS.forehead);
+    const leftForehead = getPoint(FACE_LANDMARKS.forehead);
+    const rightForehead = getPoint(FACE_LANDMARKS.forehead);
 
     const sweatRadius = displaySize.width * 0.025;
 
@@ -274,8 +292,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderAngry = () => {
-    const leftEye = getPoint(LANDMARKS.leftEye);
-    const rightEye = getPoint(LANDMARKS.rightEye);
+    const leftEye = getPoint(FACE_LANDMARKS.leftEye);
+    const rightEye = getPoint(FACE_LANDMARKS.rightEye);
     const eyebrowOffset = displaySize.width * 0.03;
 
     return (
@@ -303,8 +321,8 @@ export function FaceOverlay({ landmarks, effect, videoWidth, videoHeight, videoE
   };
 
   const renderSurprised = () => {
-    const leftEye = getPoint(LANDMARKS.leftEye);
-    const rightEye = getPoint(LANDMARKS.rightEye);
+    const leftEye = getPoint(FACE_LANDMARKS.leftEye);
+    const rightEye = getPoint(FACE_LANDMARKS.rightEye);
 
     const eyeRadius = videoWidth * 0.04;
 

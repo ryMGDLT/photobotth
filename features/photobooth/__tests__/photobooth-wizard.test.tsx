@@ -1,11 +1,15 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { PhotoboothApp } from "@/features/photobooth/components/photobooth-app";
+import { PhotoboothWizard } from "@/features/photobooth/components/photobooth-wizard";
+
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: navigationMocks.push,
   }),
 }));
 
@@ -31,7 +35,7 @@ const serviceMocks = vi.hoisted(() => ({
 
 vi.mock("@/features/photobooth/services/photobooth-storage.service", () => serviceMocks);
 
-describe("PhotoboothApp", () => {
+describe("PhotoboothWizard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     serviceMocks.hydrateSessionGallery.mockResolvedValue({
@@ -56,41 +60,25 @@ describe("PhotoboothApp", () => {
           layout: "single",
           name: "Saved Shot 01",
         },
-        {
-          id: "photo-draft",
-          sessionId: "session-123",
-          mediaType: "photo",
-          status: "draft",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          sourceImage: "data:image/jpeg;base64,draft",
-          renderedImage: "data:image/jpeg;base64,draft",
-          settings: {
-            preset: "warm",
-            brightness: 108,
-            contrast: 101,
-            saturation: 116,
-            vignette: 8,
-          },
-          layout: "strip",
-          name: "Draft Shot 02",
-        },
       ],
     });
   });
 
-  it("hydrates the gallery and separates saved and draft sections", async () => {
-    render(<PhotoboothApp currentPage="gallery" />);
+  it("starts on the camera step by default", async () => {
+    render(<PhotoboothWizard />);
+
+    expect(await screen.findByText("Camera")).toBeInTheDocument();
+    expect(screen.getByText("1/3")).toBeInTheDocument();
+  });
+
+  it("can start on the editor step when requested and a photo exists", async () => {
+    render(<PhotoboothWizard initialStep="editor" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Saved Shot 01")).toBeInTheDocument();
-      expect(screen.getByText("Draft Shot 02")).toBeInTheDocument();
+      expect(screen.getByText("Edit")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Saved Picks")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Session Gallery" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("2/3")).toBeInTheDocument();
   });
 
   it("shows a denied-camera message when camera access fails", async () => {
@@ -102,7 +90,7 @@ describe("PhotoboothApp", () => {
       },
     });
 
-    render(<PhotoboothApp currentPage="camera" />);
+    render(<PhotoboothWizard initialStep="camera" />);
 
     const startCameraButton = await screen.findByRole("button", {
       name: /start camera/i,

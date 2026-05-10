@@ -1,31 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-interface SectionNavProps {
-  currentPage: "camera" | "editor" | "gallery";
-}
-
-const items: Array<{
-  href: "/camera" | "/editor" | "/gallery";
-  key: "camera" | "editor" | "gallery";
-  label: string;
-}> = [
-  { href: "/camera", key: "camera", label: "Camera" },
-  { href: "/editor", key: "editor", label: "Editing" },
-  { href: "/gallery", key: "gallery", label: "Session Gallery" },
+const items = [
+  { href: "/", label: "Main Menu" },
+  { href: "/start", label: "Start" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/about", label: "About Us" },
 ];
 
-export function SectionNav({ currentPage }: SectionNavProps) {
+export function SectionNav() {
+  const pathname = usePathname();
+  
   return (
-    <nav className="grid gap-2 sm:grid-cols-3" aria-label="Photobooth sections">
+    <nav className="grid gap-2 sm:grid-cols-4" aria-label="Photobooth sections">
       {items.map((item) => {
-        const active = item.key === currentPage;
+        const active = pathname === item.href || (item.href === "/" && pathname === "");
         return (
           <Link
-            key={item.key}
+            key={item.href}
             href={item.href}
             className={cn(
               "rounded-full border px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em] transition",

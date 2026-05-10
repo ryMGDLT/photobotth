@@ -7,14 +7,12 @@ interface SessionBannerProps {
   photoCount: number;
   savedCount: number;
   sessionId: string;
-  currentPage: "camera" | "editor" | "gallery";
 }
 
 export function SessionBanner({
   photoCount,
   savedCount,
   sessionId,
-  currentPage,
 }: SessionBannerProps) {
   return (
     <Card className="glass-panel photobooth-grid retro-shadow overflow-hidden border-[#f0dbb8]">
@@ -44,7 +42,7 @@ export function SessionBanner({
             </div>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <SectionNav currentPage={currentPage} />
+            <SectionNav />
             <ThemeToggle />
           </div>
         </div>

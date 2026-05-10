@@ -235,4 +235,49 @@
     background-image:
       radial-gradient(circle, rgba(255, 210, 167, 0.08) 1px, transparent 1px);
   }
+
+  /* Fullscreen camera styles */
+  .fullscreen-camera {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100vh;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  .fullscreen-camera .fullscreen-controls {
+    bottom: max(1rem, env(safe-area-inset-bottom, 0));
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  }
+
+  /* Ensure fullscreen element fills viewport */
+  :fullscreen .fullscreen-camera,
+  ::backdrop {
+    background: #000;
+  }
+
+  /* Custom retro-themed scrollbar for gallery preview modal */
+  .retro-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #c9a67c #2a2435;
+  }
+
+  .retro-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .retro-scrollbar::-webkit-scrollbar-track {
+    background: #2a2435;
+    border-radius: 4px;
+  }
+
+  .retro-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c9a67c, #a0845c);
+    border-radius: 4px;
+    border: 1px solid #2a2435;
+  }
+
+  .retro-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #db9f5d, #c9a67c);
+  }
 }

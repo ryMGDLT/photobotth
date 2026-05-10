@@ -1,6 +1,11 @@
 export type PhotoStatus = "draft" | "saved";
 export type MediaType = "photo" | "video";
 
+import type { PhotoFrameId } from "./frame.types";
+
+// Re-export for convenience
+export type { PhotoFrameId };
+
 export type PhotoStylePreset =
   | "original"
   | "classic"
@@ -10,6 +15,32 @@ export type PhotoStylePreset =
   | "pop";
 
 export type PhotoLayout = "single" | "strip";
+
+// Export quality types
+export type ExportResolution = 'original' | '4k' | '8k' | 'custom';
+export type ExportFormat = 'png' | 'jpeg';
+export type ScalingQuality = 'high' | 'medium' | 'low';
+
+export interface ExportQualityConfig {
+  resolution: ExportResolution;
+  format: ExportFormat;
+  quality: number; // 0.1-1.0 for JPEG fallback
+  enableUpscaling: boolean;
+  enableHighDPI: boolean;
+  customWidth?: number;
+  customHeight?: number;
+  scalingQuality: ScalingQuality;
+}
+
+export interface ExportPreset {
+  name: string;
+  description: string;
+  config: ExportQualityConfig;
+  estimatedProcessingTime: string;
+  estimatedFileSize: string;
+}
+
+export type ExportPresetName = 'print-ready' | 'maximum-quality' | 'web-ready' | 'balanced' | 'preview';
 
 export type CameraPermissionState =
   | "idle"
@@ -22,6 +53,7 @@ export type CameraFilterPreset =
   | "natural"
   | "golden-hour"
   | "glam"
+  | "vhs-pro"
   | "cyber-pop"
   | "vhs-night"
   | "soft-blur"
@@ -128,6 +160,7 @@ export interface EditorSettings {
   contrast: number;
   saturation: number;
   vignette: number;
+  frame?: PhotoFrameId;
 }
 
 export interface PhotoRecord {
@@ -142,6 +175,7 @@ export interface PhotoRecord {
   sourceVideo?: string;
   renderedVideo?: string;
   durationMs?: number;
+  stripImages?: string[];
   cameraFilter?: CameraFilterPreset;
   settings: EditorSettings;
   layout: PhotoLayout;
@@ -167,7 +201,9 @@ export interface CreateCaptureInput {
   sourceVideo?: string;
   renderedVideo?: string;
   durationMs?: number;
+  stripImages?: string[];
   cameraFilter?: CameraFilterPreset;
+  layout?: PhotoLayout;
   name?: string;
   status?: PhotoStatus;
 }
@@ -178,6 +214,7 @@ export interface UpdatePhotoEditsInput {
   photoId: string;
   settings: EditorSettings;
   layout: PhotoLayout;
+  frame?: PhotoFrameId;
 }
 
 export interface ChangePhotoStatusInput {
