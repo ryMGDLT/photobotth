@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,9 @@ export function PhotoboothWizard({
     handleUpdateEdits,
   } = usePhotoboothGallery();
 
-  useEffect(() => {
+  // Synchronize step state from URL param before first paint to prevent visual flicker
+  // This is a legitimate URL-to-state sync pattern
+  useLayoutEffect(() => {
     if (hydrating) return;
     if (initialStep === "editor" && !activePhotoId) {
       setStep("camera");
