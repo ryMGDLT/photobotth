@@ -11,6 +11,21 @@ export const photoStylePresetSchema = z.enum([
   "pop",
 ]);
 export const photoLayoutSchema = z.enum(["single", "strip"]);
+export const photoFrameIdSchema = z.enum([
+  "classic-cream",
+  "dusty-pink",
+  "teal",
+  "amber",
+  "lavender",
+  "diagonal-stripes",
+  "dots",
+  "hearts",
+  "pastel-gradient",
+  "mottled-teal",
+  "textured-purple",
+  "coral-polka",
+  "blue-hearts",
+]);
 export const cameraFilterPresetSchema = z.enum([
   "natural",
   "golden-hour",
@@ -124,6 +139,7 @@ export const editorSettingsSchema = z.object({
   contrast: z.number().min(50).max(150),
   saturation: z.number().min(0).max(200),
   vignette: z.number().min(0).max(100),
+  frame: photoFrameIdSchema.optional(),
 });
 
 export const photoRecordSchema = z.object({

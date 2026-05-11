@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CameraStage } from "@/features/photobooth/components/camera-stage";
@@ -49,6 +50,7 @@ export function PhotoboothWizard({
     setPhotos,
     handleStatusChange,
     handleUpdateEdits,
+    handleStripSelectionConfirm,
   } = usePhotoboothGallery();
 
   // Synchronize step state from URL param before first paint to prevent visual flicker
@@ -95,6 +97,7 @@ export function PhotoboothWizard({
       setPhotos(updatedPhotos);
       setActivePhotoId(nextActiveId);
       setStep("editor");
+      toast.success("Shot captured!");
     },
     onError: (msg) => setError(msg),
   });
@@ -106,8 +109,8 @@ export function PhotoboothWizard({
     const prevStep = prevStepRef.current;
     prevStepRef.current = step;
 
-    // Only restart camera when transitioning from editor to camera
-    if (prevStep === "editor" && step === "camera" && permissionState === "granted") {
+    // Restart camera when transitioning to camera from editor or finish
+    if ((prevStep === "editor" || prevStep === "finish") && step === "camera" && permissionState === "granted") {
       // Small delay to ensure DOM is ready
       const timeout = setTimeout(() => {
         void handleStartCamera();
@@ -150,22 +153,27 @@ export function PhotoboothWizard({
       if (pendingEditsRef.current && activePhotoId) {
         await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout, nextFrame);
         pendingEditsRef.current = null;
+        toast.success("Edits saved", { id: "edits-saved" });
       }
     }, 300);
   }, [activePhotoId, activePhoto?.mediaType, handleUpdateEdits]);
 
-  // Cleanup debounce on unmount
+  // Cleanup debounce and dismiss toasts on unmount
   useEffect(() => {
     return () => {
       if (editDebounceRef.current) {
         clearTimeout(editDebounceRef.current);
       }
+      toast.dismiss();
     };
   }, []);
 
   const handleDownload = async (photoId?: string) => {
     const target = photos.find((p) => p.id === (photoId ?? activePhotoId));
-    if (target) await downloadPhoto(target);
+    if (target) {
+      await downloadPhoto(target);
+      toast.success("Downloaded");
+    }
   };
 
   const handleExit = () => {
@@ -232,6 +240,7 @@ export function PhotoboothWizard({
           <div className="animate-in slide-in-from-right-8 fade-in duration-500 space-y-4">
             <EditorPanel
               activePhoto={activePhoto}
+              photos={photos}
               settings={resolvedSettings}
               layout={resolvedLayout}
               busy={busy}
@@ -247,6 +256,7 @@ export function PhotoboothWizard({
                 if (activePhotoId) handleStatusChange(activePhotoId, s);
               }}
               onDownload={() => handleDownload()}
+              onStripSelectionConfirm={(ids) => void handleStripSelectionConfirm(ids)}
             />
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">

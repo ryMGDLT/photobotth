@@ -1,8 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { toast } from "sonner";
+import { StripPhotoSelector } from "@/features/photobooth/components/strip-photo-selector";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +29,7 @@ const presetLabels: Record<PhotoStylePreset, string> = {
 
 interface EditorPanelProps {
   activePhoto: PhotoRecord | null;
+  photos: PhotoRecord[];
   settings: EditorSettings;
   layout: PhotoLayout;
   busy: boolean;
@@ -36,10 +39,12 @@ interface EditorPanelProps {
   onFrameChange: (frame: PhotoFrameId) => void;
   onStatusChange: (status: PhotoStatus) => void;
   onDownload: () => void;
+  onStripSelectionConfirm: (selectedIds: [string, string, string]) => void;
 }
 
 export function EditorPanel({
   activePhoto,
+  photos,
   settings,
   layout,
   busy,
@@ -49,8 +54,10 @@ export function EditorPanel({
   onFrameChange,
   onStatusChange,
   onDownload,
+  onStripSelectionConfirm,
 }: EditorPanelProps) {
   const isVideo = activePhoto?.mediaType === "video";
+  const [stripSelectorOpen, setStripSelectorOpen] = useState(false);
 
   // Memoize photo preview to prevent flicker when settings change
   const photoPreview = useMemo(() => {
@@ -71,12 +78,9 @@ export function EditorPanel({
     if (layout === "strip") {
       return (
         <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg max-h-[60vh] overflow-y-auto">
-          <Image
+          <img
             src={activePhoto.renderedImage}
             alt={activePhoto.name ?? "Strip photo"}
-            width={600}
-            height={800}
-            unoptimized
             className="w-auto h-auto max-w-full object-contain rounded-sm"
           />
         </div>
@@ -85,12 +89,9 @@ export function EditorPanel({
 
     return (
       <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
-        <Image
+        <img
           src={activePhoto.renderedImage}
           alt={activePhoto.name ?? "Selected photobooth shot"}
-          width={800}
-          height={533}
-          unoptimized
           className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-sm"
         />
       </div>
@@ -118,9 +119,9 @@ export function EditorPanel({
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
             <div className="flex flex-col gap-4">
               {/* Photo preview - container sizes to content for full frame visibility */}
-              <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-6">
-                <div className="flex items-center justify-center py-6 px-4">
-                  <div className="retro-frame w-fit h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
+              <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-2 sm:p-6">
+                <div className="flex items-center justify-center py-2 px-2 sm:py-6 sm:px-4">
+                  <div className="retro-frame w-full h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
                     {photoPreview}
                   </div>
                 </div>
@@ -188,7 +189,10 @@ export function EditorPanel({
                                 ? "border-transparent bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
                                 : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--secondary)]"
                             }`}
-                            onClick={() => onPresetChange(preset as PhotoStylePreset)}
+                            onClick={() => {
+                              onPresetChange(preset as PhotoStylePreset);
+                              toast("Style applied", { id: "style-change" });
+                            }}
                             disabled={busy}
                           >
                             {label}
@@ -213,13 +217,34 @@ export function EditorPanel({
                               ? "border-transparent bg-[color:var(--accent)] text-[color:var(--accent-foreground)]"
                               : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--secondary)]"
                           }`}
-                          onClick={() => onLayoutChange(layoutValue)}
+                          onClick={() => {
+                            if (layoutValue === "strip") {
+                              setStripSelectorOpen(true);
+                            } else {
+                              onLayoutChange(layoutValue);
+                              toast("Layout set to single frame", { id: "layout-change" });
+                            }
+                          }}
                           disabled={busy}
                         >
                           {layoutValue === "single" ? "Single Frame" : "Photo Strip"}
                         </button>
                       ))}
                     </div>
+
+                    {activePhoto && (
+                      <StripPhotoSelector
+                        open={stripSelectorOpen}
+                        activePhoto={activePhoto}
+                        otherPhotos={photos.filter((p) => p.id !== activePhoto.id)}
+                        onConfirm={(ids) => {
+                          setStripSelectorOpen(false);
+                          onStripSelectionConfirm(ids);
+                          toast("Layout set to photo strip", { id: "layout-change" });
+                        }}
+                        onClose={() => setStripSelectorOpen(false)}
+                      />
+                    )}
                   </div>
 
                   <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/70 p-4">
@@ -229,7 +254,10 @@ export function EditorPanel({
                     </div>
                     <FramePicker
                       selectedFrame={settings.frame ?? "classic-cream"}
-                      onFrameChange={onFrameChange}
+                      onFrameChange={(frame) => {
+                        onFrameChange(frame);
+                        toast("Style applied", { id: "style-change" });
+                      }}
                       disabled={busy}
                     />
                   </div>

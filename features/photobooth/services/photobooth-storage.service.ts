@@ -300,7 +300,7 @@ export async function downloadPhoto(photo: PhotoRecord): Promise<void> {
         sourceImage: photo.sourceImage,
         settings: photo.settings,
         layout: photo.layout,
-        stripSources: photo.layout === "strip" ? getStripSources(photo.id, []) : undefined,
+        stripSources: photo.layout === "strip" ? getStripSources(photo.id, [photo]) : undefined,
         frame: photo.settings.frame,
       });
     } catch (error) {

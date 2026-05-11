@@ -10,6 +10,7 @@ import type {
   PhotoLayout,
   PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
+import { toast } from "sonner";
 import {
   hydrateSessionGallery,
   changePhotoStatus,
@@ -69,10 +70,11 @@ export function usePhotoboothGallery() {
   }, []);
 
   useEffect(() => {
+    if (hydrating) return;
     if (typeof window !== "undefined") {
       setStoredActiveMediaId(window.sessionStorage, activePhotoId);
     }
-  }, [activePhotoId]);
+  }, [activePhotoId, hydrating]);
 
   const activePhoto = photos.find((p) => p.id === activePhotoId) ?? null;
 
@@ -81,8 +83,15 @@ export function usePhotoboothGallery() {
     try {
       const next = await changePhotoStatus({ sessionId, photos, photoId, status });
       setPhotos(next.photos);
+      if (status === "saved") {
+        toast.success("Photo saved to gallery");
+      } else {
+        toast("Removed from saved");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update status.");
+      const msg = err instanceof Error ? err.message : "Failed to update status.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -140,6 +149,42 @@ export function usePhotoboothGallery() {
     }
   };
 
+  const handleStripSelectionConfirm = async (
+    selectedIds: [string, string, string]
+  ) => {
+    if (!activePhotoId) return;
+    const activePhoto = photos.find((p) => p.id === activePhotoId);
+    if (!activePhoto) return;
+
+    const stripSources = selectedIds.map((id) => {
+      const photo = photos.find((p) => p.id === id);
+      return photo?.sourceImage ?? activePhoto.sourceImage;
+    }) as [string, string, string];
+
+    setBusy(true);
+    try {
+      const updatedPhotos = photos.map((p) =>
+        p.id === activePhotoId ? { ...p, stripImages: stripSources } : p
+      );
+      const next = await updatePhotoEdits({
+        sessionId,
+        photos: updatedPhotos,
+        photoId: activePhotoId,
+        settings: activePhoto.settings,
+        layout: "strip",
+        frame: activePhoto.settings.frame,
+      });
+      setPhotos(next.photos);
+      toast.success("Photo strip created");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to build strip.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return {
     sessionId,
     photos,
@@ -155,5 +200,6 @@ export function usePhotoboothGallery() {
     handleDelete,
     handleDuplicate,
     handleUpdateEdits,
+    handleStripSelectionConfirm,
   };
 }
