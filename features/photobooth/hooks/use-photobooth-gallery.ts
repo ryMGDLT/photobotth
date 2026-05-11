@@ -140,6 +140,39 @@ export function usePhotoboothGallery() {
     }
   };
 
+  const handleStripSelectionConfirm = async (
+    selectedIds: [string, string, string]
+  ) => {
+    if (!activePhotoId) return;
+    const activePhoto = photos.find((p) => p.id === activePhotoId);
+    if (!activePhoto) return;
+
+    const stripSources = selectedIds.map((id) => {
+      const photo = photos.find((p) => p.id === id);
+      return photo?.sourceImage ?? activePhoto.sourceImage;
+    }) as [string, string, string];
+
+    setBusy(true);
+    try {
+      const updatedPhotos = photos.map((p) =>
+        p.id === activePhotoId ? { ...p, stripImages: stripSources } : p
+      );
+      const next = await updatePhotoEdits({
+        sessionId,
+        photos: updatedPhotos,
+        photoId: activePhotoId,
+        settings: activePhoto.settings,
+        layout: "strip",
+        frame: activePhoto.settings.frame,
+      });
+      setPhotos(next.photos);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to build strip.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return {
     sessionId,
     photos,
@@ -155,5 +188,6 @@ export function usePhotoboothGallery() {
     handleDelete,
     handleDuplicate,
     handleUpdateEdits,
+    handleStripSelectionConfirm,
   };
 }

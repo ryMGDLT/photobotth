@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { StripPhotoSelector } from "@/features/photobooth/components/strip-photo-selector";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +29,7 @@ const presetLabels: Record<PhotoStylePreset, string> = {
 
 interface EditorPanelProps {
   activePhoto: PhotoRecord | null;
+  photos: PhotoRecord[];
   settings: EditorSettings;
   layout: PhotoLayout;
   busy: boolean;
@@ -36,10 +39,12 @@ interface EditorPanelProps {
   onFrameChange: (frame: PhotoFrameId) => void;
   onStatusChange: (status: PhotoStatus) => void;
   onDownload: () => void;
+  onStripSelectionConfirm: (selectedIds: [string, string, string]) => void;
 }
 
 export function EditorPanel({
   activePhoto,
+  photos,
   settings,
   layout,
   busy,
@@ -49,8 +54,10 @@ export function EditorPanel({
   onFrameChange,
   onStatusChange,
   onDownload,
+  onStripSelectionConfirm,
 }: EditorPanelProps) {
   const isVideo = activePhoto?.mediaType === "video";
+  const [stripSelectorOpen, setStripSelectorOpen] = useState(false);
 
   // Memoize photo preview to prevent flicker when settings change
   const photoPreview = useMemo(() => {
@@ -213,13 +220,32 @@ export function EditorPanel({
                               ? "border-transparent bg-[color:var(--accent)] text-[color:var(--accent-foreground)]"
                               : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--secondary)]"
                           }`}
-                          onClick={() => onLayoutChange(layoutValue)}
+                          onClick={() => {
+                            if (layoutValue === "strip") {
+                              setStripSelectorOpen(true);
+                            } else {
+                              onLayoutChange(layoutValue);
+                            }
+                          }}
                           disabled={busy}
                         >
                           {layoutValue === "single" ? "Single Frame" : "Photo Strip"}
                         </button>
                       ))}
                     </div>
+
+                    {activePhoto && (
+                      <StripPhotoSelector
+                        open={stripSelectorOpen}
+                        activePhoto={activePhoto}
+                        otherPhotos={photos.filter((p) => p.id !== activePhoto.id)}
+                        onConfirm={(ids) => {
+                          setStripSelectorOpen(false);
+                          onStripSelectionConfirm(ids);
+                        }}
+                        onClose={() => setStripSelectorOpen(false)}
+                      />
+                    )}
                   </div>
 
                   <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/70 p-4">

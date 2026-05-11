@@ -49,6 +49,7 @@ export function PhotoboothWizard({
     setPhotos,
     handleStatusChange,
     handleUpdateEdits,
+    handleStripSelectionConfirm,
   } = usePhotoboothGallery();
 
   // Synchronize step state from URL param before first paint to prevent visual flicker
@@ -232,6 +233,7 @@ export function PhotoboothWizard({
           <div className="animate-in slide-in-from-right-8 fade-in duration-500 space-y-4">
             <EditorPanel
               activePhoto={activePhoto}
+              photos={photos}
               settings={resolvedSettings}
               layout={resolvedLayout}
               busy={busy}
@@ -247,6 +249,7 @@ export function PhotoboothWizard({
                 if (activePhotoId) handleStatusChange(activePhotoId, s);
               }}
               onDownload={() => handleDownload()}
+              onStripSelectionConfirm={(ids) => void handleStripSelectionConfirm(ids)}
             />
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
