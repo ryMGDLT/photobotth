@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { Copy, Download, Heart, Pencil, Trash2, ChevronLeft, ChevronRight, LayoutGrid, Bookmark, FileText, ArrowUpDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -233,25 +232,19 @@ export function SessionGallery({
               ) : previewPhoto.layout === "strip" ? (
                 <div className="retro-scrollbar flex flex-col gap-3 max-h-[55vh] overflow-y-auto rounded-[1.2rem] bg-[#fffaf0] p-4 pb-10 shadow-lg">
                   {(previewPhoto.stripImages?.length ? previewPhoto.stripImages : [previewPhoto.renderedImage]).map((img, idx) => (
-                    <Image
+                    <img
                       key={idx}
                       src={img}
                       alt={`Strip photo ${idx + 1}`}
-                      width={600}
-                      height={400}
-                      unoptimized
                       className="w-full h-auto object-contain rounded-sm"
                     />
                   ))}
                 </div>
               ) : (
                 <div className="flex items-center justify-center rounded-[1.2rem] bg-[#fffaf0] p-3 shadow-lg">
-                  <Image
+                  <img
                     src={previewPhoto.renderedImage}
                     alt={previewPhoto.name ?? "Photo preview"}
-                    width={900}
-                    height={600}
-                    unoptimized
                     className="w-full h-auto max-h-[55vh] object-contain rounded-sm"
                   />
                 </div>
@@ -388,12 +381,9 @@ function HeroPhoto({
                 className="w-full h-64 sm:h-80 lg:h-96 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
             ) : (
-              <Image
+              <img
                 src={photo.renderedImage}
                 alt={photo.name ?? "Hero photo"}
-                width={1200}
-                height={800}
-                unoptimized
                 className="w-full h-64 sm:h-80 lg:h-96 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
             )}
@@ -491,12 +481,9 @@ function PhotoThumbnail({
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110"
           />
         ) : (
-          <Image
+          <img
             src={photo.renderedImage}
             alt={photo.name ?? "Photo"}
-            width={400}
-            height={400}
-            unoptimized
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110"
           />
         )}

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -79,12 +78,9 @@ export function EditorPanel({
     if (layout === "strip") {
       return (
         <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg max-h-[60vh] overflow-y-auto">
-          <Image
+          <img
             src={activePhoto.renderedImage}
             alt={activePhoto.name ?? "Strip photo"}
-            width={600}
-            height={800}
-            unoptimized
             className="w-auto h-auto max-w-full object-contain rounded-sm"
           />
         </div>
@@ -93,12 +89,9 @@ export function EditorPanel({
 
     return (
       <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
-        <Image
+        <img
           src={activePhoto.renderedImage}
           alt={activePhoto.name ?? "Selected photobooth shot"}
-          width={800}
-          height={533}
-          unoptimized
           className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-sm"
         />
       </div>

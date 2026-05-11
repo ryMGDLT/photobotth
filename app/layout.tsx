@@ -53,7 +53,7 @@ export default function RootLayout({
           />
         </ThemeProvider>
         {/* Portal container for modals - renders outside normal DOM hierarchy */}
-        <div id="portal-root" className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true" />
+        <div id="portal-root" className="fixed inset-0 pointer-events-none z-[9999]" />
       </body>
     </html>
   );

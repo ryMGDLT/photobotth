@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
@@ -67,12 +66,9 @@ export function StripPhotoSelector({
           <div className="grid grid-cols-3 gap-2 max-h-[45vh] overflow-y-auto py-1 pr-1">
             {/* Slot 1: active photo — always pre-selected */}
             <div className="relative rounded-xl overflow-hidden border-2 border-[color:var(--primary)] ring-2 ring-[color:var(--primary)]/20">
-              <Image
+              <img
                 src={activePhoto.sourceImage}
                 alt={activePhoto.name ?? "Slot 1"}
-                width={120}
-                height={80}
-                unoptimized
                 className="w-full h-20 object-cover"
               />
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -99,12 +95,9 @@ export function StripPhotoSelector({
                   }`}
                   onClick={() => toggleSelect(photo.id)}
                 >
-                  <Image
+                  <img
                     src={photo.sourceImage}
                     alt={photo.name ?? "Photo option"}
-                    width={120}
-                    height={80}
-                    unoptimized
                     className="w-full h-20 object-cover"
                   />
                   {isSelected && (
