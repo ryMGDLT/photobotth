@@ -5,6 +5,7 @@ import { SessionBanner } from "@/features/photobooth/components/session-banner";
 import { SessionGallery } from "@/features/photobooth/components/session-gallery";
 import { usePhotoboothGallery } from "@/features/photobooth/hooks/use-photobooth-gallery";
 import { downloadPhoto } from "@/features/photobooth/services/photobooth-storage.service";
+import { setStoredActiveMediaId } from "@/features/photobooth/utils/photobooth-helpers";
 
 export function GalleryPageContainer() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export function GalleryPageContainer() {
           busy={busy || hydrating}
           hydrating={hydrating}
           onSelect={(id) => {
+            setStoredActiveMediaId(window.sessionStorage, id);
             setActivePhotoId(id);
             router.push("/start?step=editor");
           }}

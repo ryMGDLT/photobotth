@@ -69,10 +69,11 @@ export function usePhotoboothGallery() {
   }, []);
 
   useEffect(() => {
+    if (hydrating) return;
     if (typeof window !== "undefined") {
       setStoredActiveMediaId(window.sessionStorage, activePhotoId);
     }
-  }, [activePhotoId]);
+  }, [activePhotoId, hydrating]);
 
   const activePhoto = photos.find((p) => p.id === activePhotoId) ?? null;
 
