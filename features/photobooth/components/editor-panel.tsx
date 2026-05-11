@@ -118,9 +118,9 @@ export function EditorPanel({
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(19rem,0.6fr)] lg:items-stretch">
             <div className="flex flex-col gap-4">
               {/* Photo preview - container sizes to content for full frame visibility */}
-              <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-6">
-                <div className="flex items-center justify-center py-6 px-4">
-                  <div className="retro-frame w-fit h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
+              <div className="rounded-[1.6rem] border border-[color:var(--border)] bg-white/85 p-2 sm:p-6">
+                <div className="flex items-center justify-center py-2 px-2 sm:py-6 sm:px-4">
+                  <div className="retro-frame w-full h-fit max-w-full rounded-[1.2rem] bg-[#2a2435] p-3 shadow-xl">
                     {photoPreview}
                   </div>
                 </div>
