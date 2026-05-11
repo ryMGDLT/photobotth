@@ -251,23 +251,23 @@ export function CameraStage({
               <canvas ref={canvasRef} className="hidden" />
 
               {!cameraReady ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
-                  <div className="retro-frame rounded-full p-4">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-4 text-center sm:gap-4 sm:px-6">
+                  <div className="retro-frame rounded-full p-3 sm:p-4">
                     {permissionState === "denied" || permissionState === "unavailable" ? (
-                      <CameraOff className="size-8 text-[color:var(--foreground)]" />
+                      <CameraOff className="size-6 text-[color:var(--foreground)] sm:size-8" />
                     ) : (
-                      <Camera className="size-8 text-[color:var(--foreground)]" />
+                      <Camera className="size-6 text-[color:var(--foreground)] sm:size-8" />
                     )}
                   </div>
-                  <div className="max-w-sm space-y-2">
-                    <p className="text-lg font-semibold text-[color:var(--foreground)]">
+                  <div className="max-w-sm space-y-1 sm:space-y-2">
+                    <p className="text-base font-semibold text-[color:var(--foreground)] sm:text-lg">
                       {permissionState === "denied"
                         ? "Camera permission was denied."
                         : permissionState === "unavailable"
                           ? "This browser cannot access a webcam here."
                           : "Start your booth when you are ready."}
                     </p>
-                    <p className="text-sm leading-6 text-[color:var(--muted-foreground)]">
+                    <p className="text-xs leading-5 text-[color:var(--muted-foreground)] sm:text-sm sm:leading-6">
                       {permissionState === "denied"
                         ? "Allow camera access in your browser settings, then try again."
                         : permissionState === "unavailable"
@@ -278,7 +278,7 @@ export function CameraStage({
                   <Button
                     type="button"
                     size="lg"
-                    className="rounded-full px-6"
+                    className="rounded-full"
                     onClick={() => void onStartCamera()}
                     disabled={busy || permissionState === "unavailable"}
                   >

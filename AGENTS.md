@@ -142,6 +142,19 @@ The following rules must be followed for production/demo-ready code:
 - **Test regressions before deploying** - Ensure existing functionality remains intact after changes
 - **Keep changes minimal and focused** - Avoid over-engineering solutions that could break existing features
 
+## Commit Message Rule
+
+At the end of every task, always provide a brief git commit message covering what changed. Format:
+
+```
+<type>: <short summary>
+
+- <change 1>
+- <change 2>
+```
+
+Types: `fix`, `feat`, `refactor`, `style`, `docs`, `chore`. Keep the summary under 72 characters. Bullet points are optional for single-change commits.
+
 ## Final Rule
 
 When there is a conflict between complex AI features and performance, choose performance (keep the frame rate high).
