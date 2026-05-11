@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CameraStage } from "@/features/photobooth/components/camera-stage";
@@ -96,6 +97,7 @@ export function PhotoboothWizard({
       setPhotos(updatedPhotos);
       setActivePhotoId(nextActiveId);
       setStep("editor");
+      toast.success("Shot captured!");
     },
     onError: (msg) => setError(msg),
   });
@@ -151,22 +153,27 @@ export function PhotoboothWizard({
       if (pendingEditsRef.current && activePhotoId) {
         await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout, nextFrame);
         pendingEditsRef.current = null;
+        toast.success("Edits saved", { id: "edits-saved" });
       }
     }, 300);
   }, [activePhotoId, activePhoto?.mediaType, handleUpdateEdits]);
 
-  // Cleanup debounce on unmount
+  // Cleanup debounce and dismiss toasts on unmount
   useEffect(() => {
     return () => {
       if (editDebounceRef.current) {
         clearTimeout(editDebounceRef.current);
       }
+      toast.dismiss();
     };
   }, []);
 
   const handleDownload = async (photoId?: string) => {
     const target = photos.find((p) => p.id === (photoId ?? activePhotoId));
-    if (target) await downloadPhoto(target);
+    if (target) {
+      await downloadPhoto(target);
+      toast.success("Downloaded");
+    }
   };
 
   const handleExit = () => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bungee, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const bodyFont = Space_Grotesk({
@@ -44,6 +45,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster
+            position="bottom-right"
+            duration={2000}
+            richColors
+            closeButton={false}
+          />
         </ThemeProvider>
         {/* Portal container for modals - renders outside normal DOM hierarchy */}
         <div id="portal-root" className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true" />

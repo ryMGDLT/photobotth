@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { toast } from "sonner";
 import { StripPhotoSelector } from "@/features/photobooth/components/strip-photo-selector";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -195,7 +196,10 @@ export function EditorPanel({
                                 ? "border-transparent bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
                                 : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--secondary)]"
                             }`}
-                            onClick={() => onPresetChange(preset as PhotoStylePreset)}
+                            onClick={() => {
+                              onPresetChange(preset as PhotoStylePreset);
+                              toast("Style applied", { id: "style-change" });
+                            }}
                             disabled={busy}
                           >
                             {label}
@@ -225,6 +229,7 @@ export function EditorPanel({
                               setStripSelectorOpen(true);
                             } else {
                               onLayoutChange(layoutValue);
+                              toast("Layout set to single frame", { id: "layout-change" });
                             }
                           }}
                           disabled={busy}
@@ -242,6 +247,7 @@ export function EditorPanel({
                         onConfirm={(ids) => {
                           setStripSelectorOpen(false);
                           onStripSelectionConfirm(ids);
+                          toast("Layout set to photo strip", { id: "layout-change" });
                         }}
                         onClose={() => setStripSelectorOpen(false)}
                       />
@@ -255,7 +261,10 @@ export function EditorPanel({
                     </div>
                     <FramePicker
                       selectedFrame={settings.frame ?? "classic-cream"}
-                      onFrameChange={onFrameChange}
+                      onFrameChange={(frame) => {
+                        onFrameChange(frame);
+                        toast("Style applied", { id: "style-change" });
+                      }}
                       disabled={busy}
                     />
                   </div>

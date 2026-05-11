@@ -10,6 +10,7 @@ import type {
   PhotoLayout,
   PhotoFrameId,
 } from "@/features/photobooth/types/photobooth.types";
+import { toast } from "sonner";
 import {
   hydrateSessionGallery,
   changePhotoStatus,
@@ -82,8 +83,15 @@ export function usePhotoboothGallery() {
     try {
       const next = await changePhotoStatus({ sessionId, photos, photoId, status });
       setPhotos(next.photos);
+      if (status === "saved") {
+        toast.success("Photo saved to gallery");
+      } else {
+        toast("Removed from saved");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update status.");
+      const msg = err instanceof Error ? err.message : "Failed to update status.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -167,8 +175,11 @@ export function usePhotoboothGallery() {
         frame: activePhoto.settings.frame,
       });
       setPhotos(next.photos);
+      toast.success("Photo strip created");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to build strip.");
+      const msg = err instanceof Error ? err.message : "Failed to build strip.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
