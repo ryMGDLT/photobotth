@@ -107,8 +107,8 @@ export function PhotoboothWizard({
     const prevStep = prevStepRef.current;
     prevStepRef.current = step;
 
-    // Only restart camera when transitioning from editor to camera
-    if (prevStep === "editor" && step === "camera" && permissionState === "granted") {
+    // Restart camera when transitioning to camera from editor or finish
+    if ((prevStep === "editor" || prevStep === "finish") && step === "camera" && permissionState === "granted") {
       // Small delay to ensure DOM is ready
       const timeout = setTimeout(() => {
         void handleStartCamera();
