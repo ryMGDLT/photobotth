@@ -125,11 +125,12 @@ async function renderSinglePhoto(
     const frame = frameId ?? getDefaultFrame();
     const exportConfig = isPreview ? PREVIEW_CONFIG : getCurrentExportConfig();
     
-    // Check cache first
+    // Check cache first (key includes settings so different presets/filters are cached separately)
     const imageHash = cacheManager.generateImageHash(sourceImage);
-    const cacheKey = `${imageHash}-${frame}-${JSON.stringify(settings)}-${isPreview ? 'preview' : 'high'}`;
+    const settingsHash = cacheManager.generateImageHash(JSON.stringify(settings));
+    const compositeKey = `${imageHash}-${frame}-${settingsHash}`;
     
-    const cachedResult = cacheManager.getComposite(imageHash, frame, isPreview ? 'preview' : 'high');
+    const cachedResult = cacheManager.getComposite(compositeKey, frame, isPreview ? 'preview' : 'high');
     if (cachedResult) {
       return cachedResult;
     }
@@ -275,7 +276,7 @@ async function renderSinglePhoto(
       : highDPICanvasToDataURL({ canvas, context: ctx, scale: canvasScale, logicalWidth: totalWidth, logicalHeight: totalHeight, actualWidth: canvas.width, actualHeight: canvas.height }, exportConfig.format, exportConfig.quality);
 
     // Cache the result
-    cacheManager.setComposite(imageHash, frame, isPreview ? 'preview' : 'high', result);
+    cacheManager.setComposite(compositeKey, frame, isPreview ? 'preview' : 'high', result);
 
     return result;
   }, `renderSinglePhoto-${isPreview ? 'preview' : 'high'}`);
@@ -295,9 +296,11 @@ async function renderStripPhoto(
     const frame = frameId ?? getDefaultFrame();
     const exportConfig = isPreview ? PREVIEW_CONFIG : getCurrentExportConfig();
 
-  // Check cache first for strip photos
+  // Check cache first for strip photos (key includes settings so different presets are cached separately)
   const imageHash = cacheManager.generateImageHash(sourceImages.join('|'));
-  const cachedResult = cacheManager.getComposite(imageHash, frame, isPreview ? 'preview' : 'high');
+  const settingsHash = cacheManager.generateImageHash(JSON.stringify(settings));
+  const compositeKey = `${imageHash}-${frame}-${settingsHash}`;
+  const cachedResult = cacheManager.getComposite(compositeKey, frame, isPreview ? 'preview' : 'high');
   if (cachedResult) {
     return cachedResult;
   }
@@ -423,7 +426,7 @@ async function renderStripPhoto(
     : highDPICanvasToDataURL({ canvas, context: ctx, scale, logicalWidth: totalWidth, logicalHeight: totalHeight, actualWidth: canvas.width, actualHeight: canvas.height }, exportConfig.format, exportConfig.quality);
 
   // Cache the result
-  cacheManager.setComposite(imageHash, frame, isPreview ? 'preview' : 'high', result);
+  cacheManager.setComposite(compositeKey, frame, isPreview ? 'preview' : 'high', result);
 
   return result;
   }, `renderStripPhoto-${isPreview ? 'preview' : 'high'}`);

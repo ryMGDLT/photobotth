@@ -135,13 +135,13 @@ export function PhotoboothWizard({
 
   // Debounce ref for slider edits to prevent flickering
   const editDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingEditsRef = useRef<{ settings: EditorSettings; layout: PhotoLayout } | null>(null);
+  const pendingEditsRef = useRef<{ settings: EditorSettings; layout: PhotoLayout; frame?: PhotoFrameId } | null>(null);
 
   const applyEdits = useCallback(async (nextSettings: EditorSettings, nextLayout: PhotoLayout, nextFrame?: PhotoFrameId) => {
     if (!activePhotoId || activePhoto?.mediaType === "video") return;
 
-    // Store pending edits
-    pendingEditsRef.current = { settings: nextSettings, layout: nextLayout };
+    // Store pending edits (including frame so the debounce closure always reads the latest)
+    pendingEditsRef.current = { settings: nextSettings, layout: nextLayout, frame: nextFrame };
 
     // Clear existing debounce
     if (editDebounceRef.current) {
@@ -151,7 +151,7 @@ export function PhotoboothWizard({
     // Debounce the actual update to prevent flickering during slider drag
     editDebounceRef.current = setTimeout(async () => {
       if (pendingEditsRef.current && activePhotoId) {
-        await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout, nextFrame);
+        await handleUpdateEdits(activePhotoId, pendingEditsRef.current.settings, pendingEditsRef.current.layout, pendingEditsRef.current.frame);
         pendingEditsRef.current = null;
         toast.success("Edits saved", { id: "edits-saved" });
       }
@@ -169,11 +169,26 @@ export function PhotoboothWizard({
   }, []);
 
   const handleDownload = async (photoId?: string) => {
-    const target = photos.find((p) => p.id === (photoId ?? activePhotoId));
-    if (target) {
-      await downloadPhoto(target);
-      toast.success("Downloaded");
+    const targetId = photoId ?? activePhotoId;
+    let target = photos.find((p) => p.id === targetId);
+    if (!target) return;
+
+    // Flush any pending debounced edits so download reflects current settings
+    if (pendingEditsRef.current && targetId === activePhotoId) {
+      if (editDebounceRef.current) {
+        clearTimeout(editDebounceRef.current);
+        editDebounceRef.current = null;
+      }
+      const pending = pendingEditsRef.current;
+      pendingEditsRef.current = null;
+      if (targetId) await handleUpdateEdits(targetId, pending.settings, pending.layout, pending.frame);
+      toast.success("Edits saved", { id: "edits-saved" });
+      // Re-read updated photo from photos array after flush
+      target = photos.find((p) => p.id === targetId) ?? target;
     }
+
+    await downloadPhoto(target);
+    toast.success("Downloaded");
   };
 
   const handleExit = () => {
@@ -244,10 +259,10 @@ export function PhotoboothWizard({
               settings={resolvedSettings}
               layout={resolvedLayout}
               busy={busy}
-              onPresetChange={(p: PhotoStylePreset) => applyEdits(createEditorSettings(p), resolvedLayout)}
-              onLayoutChange={(l: PhotoLayout) => applyEdits(resolvedSettings, l)}
+              onPresetChange={(p: PhotoStylePreset) => applyEdits({ ...createEditorSettings(p), frame: resolvedSettings.frame }, resolvedLayout, resolvedSettings.frame)}
+              onLayoutChange={(l: PhotoLayout) => applyEdits(resolvedSettings, l, resolvedSettings.frame)}
               onSliderChange={(field, value) =>
-                applyEdits({ ...resolvedSettings, [field]: value }, resolvedLayout)
+                applyEdits({ ...resolvedSettings, [field]: value }, resolvedLayout, resolvedSettings.frame)
               }
               onFrameChange={(frame: PhotoFrameId) =>
                 applyEdits({ ...resolvedSettings, frame }, resolvedLayout, frame)
