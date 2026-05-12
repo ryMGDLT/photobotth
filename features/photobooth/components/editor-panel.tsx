@@ -1,10 +1,11 @@
 "use client";
 
 import { Download, FileMinus, LayoutPanelTop, Sparkles, Star, Wrench } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 import { toast } from "sonner";
 import { StripPhotoSelector } from "@/features/photobooth/components/strip-photo-selector";
+import { renderPhotoDataUrl, getStripSources } from "@/features/photobooth/services/photo-editor.service";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,8 +59,48 @@ export function EditorPanel({
 }: EditorPanelProps) {
   const isVideo = activePhoto?.mediaType === "video";
   const [stripSelectorOpen, setStripSelectorOpen] = useState(false);
+  const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null);
+  const livePreviewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoize photo preview to prevent flicker when settings change
+  // Live preview: re-render immediately when settings, frame, or layout changes
+  useEffect(() => {
+    if (!activePhoto || isVideo) return;
+
+    if (livePreviewDebounceRef.current) {
+      clearTimeout(livePreviewDebounceRef.current);
+    }
+
+    livePreviewDebounceRef.current = setTimeout(() => {
+      const stripSources =
+        layout === "strip"
+          ? getStripSources(activePhoto.id, photos)
+          : undefined;
+
+      renderPhotoDataUrl({
+        sourceImage: activePhoto.sourceImage,
+        settings,
+        layout,
+        stripSources,
+        frame: settings.frame,
+        usePreviewMode: true,
+      }).then((url) => setLivePreviewUrl(url)).catch(() => {});
+    }, 80);
+
+    return () => {
+      if (livePreviewDebounceRef.current) {
+        clearTimeout(livePreviewDebounceRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePhoto?.id, activePhoto?.sourceImage, settings, layout, photos]);
+
+  // Reset live preview when switching photos
+  useEffect(() => {
+    setLivePreviewUrl(null);
+  }, [activePhoto?.id]);
+
+  const previewSrc = livePreviewUrl ?? activePhoto?.renderedImage;
+
   const photoPreview = useMemo(() => {
     if (!activePhoto) return null;
 
@@ -79,7 +120,7 @@ export function EditorPanel({
       return (
         <div className="flex flex-col gap-3 rounded-[1.2rem] bg-[#fffaf0] p-4 pb-12 shadow-lg max-h-[60vh] overflow-y-auto">
           <img
-            src={activePhoto.renderedImage}
+            src={previewSrc ?? ""}
             alt={activePhoto.name ?? "Strip photo"}
             className="w-auto h-auto max-w-full object-contain rounded-sm"
           />
@@ -90,15 +131,13 @@ export function EditorPanel({
     return (
       <div className="flex flex-col items-center rounded-[1.2rem] bg-[#fffaf0] p-3 pb-16 shadow-lg">
         <img
-          src={activePhoto.renderedImage}
+          src={previewSrc ?? ""}
           alt={activePhoto.name ?? "Selected photobooth shot"}
           className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-sm"
         />
       </div>
     );
-    // Only re-render when photo ID, media type, or layout changes - NOT when settings change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePhoto?.id, activePhoto?.mediaType, activePhoto?.renderedImage, activePhoto?.renderedVideo, activePhoto?.stripImages, activePhoto?.name, layout]);
+  }, [activePhoto?.id, activePhoto?.mediaType, activePhoto?.renderedVideo, activePhoto?.name, layout, previewSrc, isVideo]);
 
   return (
     <Card className="glass-panel border-white/60">
