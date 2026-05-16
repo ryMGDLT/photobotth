@@ -73,7 +73,7 @@ describe("GalleryPageContainer", () => {
       expect(screen.getByText("Saved Shot 01")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByAltText("Saved Shot 01"));
+    await user.click(screen.getByRole("button", { name: /edit this photo/i }));
     expect(navigationMocks.push).toHaveBeenCalledWith("/start?step=editor");
   });
 });
